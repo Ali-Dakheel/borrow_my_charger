@@ -3,7 +3,7 @@
 
 <div class="container mt-4">
     <h2 class="mb-4">Find Available Charge Points</h2>
-    
+
     <!-- Search and Filter Section -->
     <div class="card mb-4 border-0 shadow-sm">
         <div class="card-body p-4">
@@ -40,7 +40,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row mt-3 g-3">
                     <div class="col-md-12">
                         <div class="form-check form-switch d-inline-block me-3">
@@ -57,7 +57,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row mt-3">
                     <div class="col-md-12">
                         <div id="map" style="height: 400px; width: 100%; border-radius: 8px;"></div>
@@ -97,7 +97,16 @@
                                 </div>
                             </div>
                             <div class="card-footer bg-white border-top-0">
-                                <a href="booking.php?charge_point_id=<?= $point['id'] ?>" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#bookingModal">
+                                <a href="#"
+                                    class="btn btn-primary w-100"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#bookingModal"
+                                    data-charge-point-id="<?= htmlspecialchars($point['id']) ?>"
+                                    data-price="<?= htmlspecialchars($point['price_per_kwh']) ?>"
+                                    data-address="<?= htmlspecialchars($point['address']) ?>"
+                                    data-postcode="<?= htmlspecialchars($point['postcode']) ?>"
+                                    data-lat="<?= htmlspecialchars($point['latitude']) ?>"
+                                    data-lng="<?= htmlspecialchars($point['longitude']) ?>">
                                     <i class="bi bi-calendar-check"></i> Book Now
                                 </a>
                             </div>
@@ -111,193 +120,198 @@
 
 <!-- Modal -->
 <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="bookingModalLabel">Book Charge Point</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <form id="bookingForm" method="post" action="/booking.php">
-        <input type="hidden" name="action" value="create">
-        <input type="hidden" name="user_id" value="<?= $_SESSION['user_id'] ?>">
-        <input type="hidden" name="charge_point_id" id="modalChargePointId">
-        <input type="hidden" name="status" value="pending">
-        
-        <div class="modal-body">
-          <div class="mb-3">
-            <label for="startTime" class="form-label">Start Time</label>
-            <input type="datetime-local" class="form-control" id="startTime" name="start_time" required>
-          </div>
-          <div class="mb-3">
-            <label for="endTime" class="form-label">End Time</label>
-            <input type="datetime-local" class="form-control" id="endTime" name="end_time" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Charge Point Details</label>
-            <div class="card">
-              <div class="card-body">
-                <h6 id="modalChargePointAddress"></h6>
-                <div class="d-flex justify-content-between">
-                  <small id="modalChargePointPostcode"></small>
-                  <small>£<span id="modalChargePointPrice">0.00</span>/kWh</small>
-                </div>
-              </div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookingModalLabel">Book Charge Point</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-          </div>
-          <div class="mb-3">
-            <label for="totalCost" class="form-label">Total Estimated Cost</label>
-            <input type="text" class="form-control" id="totalCost" readonly>
-            <input type="hidden" name="total_cost" id="totalCostValue">
-          </div>
+            <form id="bookingForm" method="post" action="/booking.php">
+                <input type="hidden" name="action" value="create">
+                <input type="hidden" name="user_id" value="<?= $_SESSION['user_id'] ?>">
+                <input type="hidden" name="charge_point_id" id="modalChargePointId">
+                <input type="hidden" name="status" value="pending">
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="startTime" class="form-label">Start Time</label>
+                        <input type="datetime-local" class="form-control" id="startTime" name="start_time" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="endTime" class="form-label">End Time</label>
+                        <input type="datetime-local" class="form-control" id="endTime" name="end_time" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Charge Point Details</label>
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 id="modalChargePointAddress"></h6>
+                                <div class="d-flex justify-content-between">
+                                    <small id="modalChargePointPostcode"></small>
+                                    <small>£<span id="modalChargePointPrice">0.00</span>/kWh</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="totalCost" class="form-label">Total Estimated Cost</label>
+                        <input type="text" class="form-control" id="totalCost" readonly>
+                        <input type="hidden" name="total_cost" id="totalCostValue">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Confirm Booking</button>
+                </div>
+            </form>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary">Confirm Booking</button>
-        </div>
-      </form>
     </div>
-  </div>
 </div>
 
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-    let map, markers = [];
-    let currentLocation = { lat: 51.5074, lng: -0.1278 }; // Default to London
-    
-    // Initialize Map
-    function initMap() {
-        map = new google.maps.Map(document.getElementById('map'), {
-            center: currentLocation,
-            zoom: 12,
-            styles: [
-                {
+    document.addEventListener('DOMContentLoaded', function() {
+
+        let map, markers = [];
+        let currentLocation = {
+            lat: 51.5074,
+            lng: -0.1278
+        }; // Default to London
+
+        // Initialize Map
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: currentLocation,
+                zoom: 12,
+                styles: [{
                     featureType: "poi",
                     elementType: "labels",
-                    stylers: [{ visibility: "off" }]
-                }
-            ]
-        });
-        
-        // Add markers for initial charge points
-        updateMapMarkers(<?= json_encode(array_filter($chargePoints, function($p) { return $p['is_available']; })) ?>);
-        
-        // Try to get user's current location
-        getCurrentLocation();
-        
-        // Add click listener to set coordinates
-        map.addListener('click', (e) => {
-            const latLng = e.latLng;
-            document.getElementById('latitude').value = latLng.lat();
-            document.getElementById('longitude').value = latLng.lng();
+                    stylers: [{
+                        visibility: "off"
+                    }]
+                }]
+            });
+
+            // Add markers for initial charge points
+            updateMapMarkers(<?= json_encode(array_filter($chargePoints, function ($p) {
+                                    return $p['is_available'];
+                                })) ?>);
+
+            // Try to get user's current location
+            getCurrentLocation();
+
+            // Add click listener to set coordinates
+            map.addListener('click', (e) => {
+                const latLng = e.latLng;
+                document.getElementById('latitude').value = latLng.lat();
+                document.getElementById('longitude').value = latLng.lng();
+                loadChargePoints();
+            });
+        }
+
+        // Get User's Current Location
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    currentLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    document.getElementById('latitude').value = currentLocation.lat;
+                    document.getElementById('longitude').value = currentLocation.lng;
+                    map.setCenter(currentLocation);
+                    loadChargePoints();
+                }, showError);
+            }
+        }
+
+        // Clear all filters
+        function clearAllFilters() {
+            document.getElementById('location').value = '';
+            document.getElementById('minPrice').value = '';
+            document.getElementById('maxPrice').value = '';
+            document.getElementById('latitude').value = '';
+            document.getElementById('longitude').value = '';
+            document.getElementById('availableOnly').checked = true;
+            loadChargePoints();
+        }
+
+        document.getElementById('useCurrentLocation').addEventListener('click', getCurrentLocation);
+        document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
+
+        // Error Handling for Geolocation
+        function showError(error) {
+            console.error('Geolocation error:', error);
+        }
+
+        // AJAX Filtering
+        const searchForm = document.getElementById('searchForm');
+        let debounceTimer;
+
+        // Event Listeners
+        searchForm.addEventListener('submit', e => {
+            e.preventDefault();
             loadChargePoints();
         });
-    }
-    
-    // Get User's Current Location
-    function getCurrentLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                currentLocation = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                };
-                document.getElementById('latitude').value = currentLocation.lat;
-                document.getElementById('longitude').value = currentLocation.lng;
-                map.setCenter(currentLocation);
-                loadChargePoints();
-            }, showError);
-        }
-    }
-    
-    // Clear all filters
-    function clearAllFilters() {
-        document.getElementById('location').value = '';
-        document.getElementById('minPrice').value = '';
-        document.getElementById('maxPrice').value = '';
-        document.getElementById('latitude').value = '';
-        document.getElementById('longitude').value = '';
-        document.getElementById('availableOnly').checked = true;
-        loadChargePoints();
-    }
-    
-    document.getElementById('useCurrentLocation').addEventListener('click', getCurrentLocation);
-    document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
-    
-    // Error Handling for Geolocation
-    function showError(error) {
-        console.error('Geolocation error:', error);
-    }
-    
-    // AJAX Filtering
-    const searchForm = document.getElementById('searchForm');
-    let debounceTimer;
-    
-    // Event Listeners
-    searchForm.addEventListener('submit', e => {
-        e.preventDefault();
-        loadChargePoints();
-    });
-    
-    // Handle all filter inputs
-    const filterInputs = ['location', 'minPrice', 'maxPrice', 'latitude', 'longitude', 'availableOnly'];
-    filterInputs.forEach(id => {
-        const element = document.getElementById(id);
-        element.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            
-            // If input is cleared, reset all filters
-            if ((id === 'location' && element.value === '') || 
-                (['minPrice', 'maxPrice', 'latitude', 'longitude'].includes(id) && element.value === '')) {
-                clearAllFilters();
-                return;
-            }
-            
-            debounceTimer = setTimeout(loadChargePoints, 300);
+
+        // Handle all filter inputs
+        const filterInputs = ['location', 'minPrice', 'maxPrice', 'latitude', 'longitude', 'availableOnly'];
+        filterInputs.forEach(id => {
+            const element = document.getElementById(id);
+            element.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+
+                // If input is cleared, reset all filters
+                if ((id === 'location' && element.value === '') ||
+                    (['minPrice', 'maxPrice', 'latitude', 'longitude'].includes(id) && element.value === '')) {
+                    clearAllFilters();
+                    return;
+                }
+
+                debounceTimer = setTimeout(loadChargePoints, 300);
+            });
         });
-    });
-    
-    // Load Charge Points
-    async function loadChargePoints() {
-        try {
-            const params = new URLSearchParams();
-            params.append('ajax', 'search');
-            
-            // Only include non-empty filters
-            const location = document.getElementById('location').value;
-            const minPrice = document.getElementById('minPrice').value;
-            const maxPrice = document.getElementById('maxPrice').value;
-            const latitude = document.getElementById('latitude').value;
-            const longitude = document.getElementById('longitude').value;
-            
-            if (location) params.append('location', location);
-            if (minPrice) params.append('minPrice', minPrice);
-            if (maxPrice) params.append('maxPrice', maxPrice);
-            if (latitude) params.append('latitude', latitude);
-            if (longitude) params.append('longitude', longitude);
-            
-            params.append('availableOnly', document.getElementById('availableOnly').checked ? 1 : 0);
-            
-            const response = await fetch(`chargePoint.php?${params}`);
-            if (!response.ok) throw new Error('Network response was not ok');
-            
-            const points = await response.json();
-            updateChargePointsList(points);
-            updateMapMarkers(points);
-            
-        } catch (error) {
-            console.error('Error:', error);
+
+        // Load Charge Points
+        async function loadChargePoints() {
+            try {
+                const params = new URLSearchParams();
+                params.append('ajax', 'search');
+
+                // Only include non-empty filters
+                const location = document.getElementById('location').value;
+                const minPrice = document.getElementById('minPrice').value;
+                const maxPrice = document.getElementById('maxPrice').value;
+                const latitude = document.getElementById('latitude').value;
+                const longitude = document.getElementById('longitude').value;
+
+                if (location) params.append('location', location);
+                if (minPrice) params.append('minPrice', minPrice);
+                if (maxPrice) params.append('maxPrice', maxPrice);
+                if (latitude) params.append('latitude', latitude);
+                if (longitude) params.append('longitude', longitude);
+
+                params.append('availableOnly', document.getElementById('availableOnly').checked ? 1 : 0);
+
+                const response = await fetch(`chargePoint.php?${params}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+
+                const points = await response.json();
+                updateChargePointsList(points);
+                updateMapMarkers(points);
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
         }
-    }
-    
-    // Update Results List
-    function updateChargePointsList(points) {
-        const list = document.getElementById('chargePointsList');
-        list.innerHTML = '';
-        
-        if (points.length === 0) {
-            list.innerHTML = `
+
+        // Update Results List
+        function updateChargePointsList(points) {
+            const list = document.getElementById('chargePointsList');
+            list.innerHTML = '';
+
+            if (points.length === 0) {
+                list.innerHTML = `
                 <div class="col-12 text-center py-5">
                     <i class="bi bi-lightning-charge-fill text-muted" style="font-size: 3rem;"></i>
                     <h5 class="mt-3 text-muted">No charge points found</h5>
@@ -307,13 +321,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     </button>
                 </div>
             `;
-            return;
-        }
-        
-        points.forEach(point => {
-            const col = document.createElement('div');
-            col.className = 'col';
-            col.innerHTML = `
+                return;
+            }
+
+            points.forEach(point => {
+                const col = document.createElement('div');
+                col.className = 'col';
+                col.innerHTML = `
                 <div class="card h-100 shadow-sm">
                     ${point.image_path ? 
                         `<img src="${point.image_path}" class="card-img-top" style="height: 200px; object-fit: cover;">` : 
@@ -343,113 +357,123 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             `;
-            list.appendChild(col);
-        });
-    }
-    
-    // Update Map Markers
-    function updateMapMarkers(points) {
-        // Clear existing markers
-        markers.forEach(marker => marker.setMap(null));
-        markers = [];
-        
-        // Add new markers
-        points.forEach(point => {
-            const marker = new google.maps.Marker({
-                position: { lat: parseFloat(point.latitude), lng: parseFloat(point.longitude) },
-                map,
-                title: point.address,
-                icon: {
-                    url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-                    scaledSize: new google.maps.Size(32, 32)
-                }
+                list.appendChild(col);
             });
-            markers.push(marker);
-        });
-        
-        // Center map on markers if available
-        if (points.length > 0) {
-            const bounds = new google.maps.LatLngBounds();
-            markers.forEach(marker => bounds.extend(marker.getPosition()));
-            map.fitBounds(bounds);
-        } else {
-            map.setCenter(currentLocation);
-            map.setZoom(12);
         }
-    }
 
-    // Add modal show handler
-    document.getElementById('bookingModal').addEventListener('show.bs.modal', function(event) {
-    const button = event.relatedTarget;
-    const card = button.closest('.card');
-    
-    // Extract charge point ID from the button's href (GET parameter)
-    const urlParams = new URLSearchParams(button.getAttribute('href').split('?')[1]);
-    const chargePointId = urlParams.get('charge_point_id');
+        // Update Map Markers
+        function updateMapMarkers(points) {
+            // Clear existing markers
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
 
-    // Set charge point ID in modal hidden input
-    this.querySelector('#modalChargePointId').value = chargePointId;
+            // Add new markers
+            points.forEach(point => {
+                const marker = new google.maps.Marker({
+                    position: {
+                        lat: parseFloat(point.latitude),
+                        lng: parseFloat(point.longitude)
+                    },
+                    map,
+                    title: point.address,
+                    icon: {
+                        url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                        scaledSize: new google.maps.Size(32, 32)
+                    }
+                });
+                markers.push(marker);
+            });
 
-    // Extract price from card
-    const priceText = card.querySelector('.fw-bold').textContent;
-    const pricePerKwh = parseFloat(priceText.replace(/[^0-9.]/g, ''));
-    
-    // Store price in modal
-    this.querySelector('#modalChargePointPrice').textContent = pricePerKwh.toFixed(2);
-    this.dataset.pricePerKwh = pricePerKwh;
-    
-    // Set initial times
-    const now = new Date();
-    const endTime = new Date(now.getTime() + 3600000); // 1 hour later
-    this.querySelector('#startTime').value = formatDateTime(now);
-    this.querySelector('#endTime').value = formatDateTime(endTime);
-    
-    calculateTotalCost();
-});
+            // Center map on markers if available
+            if (points.length > 0) {
+                const bounds = new google.maps.LatLngBounds();
+                markers.forEach(marker => bounds.extend(marker.getPosition()));
+                map.fitBounds(bounds);
+            } else {
+                map.setCenter(currentLocation);
+                map.setZoom(12);
+            }
+        }
 
-// Add time change listeners
-document.querySelectorAll('#startTime, #endTime').forEach(input => {
-    input.addEventListener('change', calculateTotalCost);
-});
+        // Add modal show handler
+        document.getElementById('bookingModal').addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
 
-function calculateTotalCost() {
-    const modal = document.getElementById('bookingModal');
-    const pricePerKwh = parseFloat(modal.dataset.pricePerKwh);
-    const start = new Date(modal.querySelector('#startTime').value);
-    const end = new Date(modal.querySelector('#endTime').value);
-    
-    if (!start || !end || end <= start) {
-        modal.querySelector('#totalCost').value = 'Invalid time range';
-        return;
-    }
-    
-    const hours = (end - start) / 3600000; // milliseconds to hours
-    const totalCost = pricePerKwh * hours; // Assuming 7kW charging rate
-    
-    modal.querySelector('#totalCost').value = `£${totalCost.toFixed(2)}`;
-    modal.querySelector('#totalCostValue').value = totalCost.toFixed(2);
-}
+            // Read details from button's data attributes
+            const chargePointId = button.dataset.chargePointId;
+            const pricePerKwh = parseFloat(button.dataset.price) || 0;
+            const address = button.dataset.address;
+            const postcode = button.dataset.postcode;
+            const lat = button.dataset.lat;
+            const lng = button.dataset.lng;
 
-function formatDateTime(date) {
-    return date.toISOString().slice(0, 16);
-}
-    
-    // HTML Escape Function
-    function escapeHtml(str) {
-        return str.toString()
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-    
-    // Make clearAllFilters available globally
-    window.clearAllFilters = clearAllFilters;
-    
-    // Initialize the map after Google Maps API loads
-    window.initMap = initMap;
-});
+            // Set hidden input and display fields in the modal
+            this.querySelector('#modalChargePointId').value = chargePointId;
+            // Use the correct element ID from your markup:
+            this.querySelector('#modalChargePointPrice').textContent = pricePerKwh.toFixed(2);
+            this.dataset.pricePerKwh = pricePerKwh;
+            this.querySelector('#modalChargePointAddress').textContent = address;
+            this.querySelector('#modalChargePointPostcode').textContent = postcode;
+
+            // Set initial start and end times (1 hour apart)
+            const now = new Date();
+            const endTime = new Date(now.getTime() + 3600000); // 1 hour later
+            this.querySelector('#startTime').value = formatDateTime(now);
+            this.querySelector('#endTime').value = formatDateTime(endTime);
+
+            // Recalculate the total cost
+            calculateTotalCost();
+        });
+
+        // Add time change listeners
+        document.querySelectorAll('#startTime, #endTime').forEach(input => {
+            input.addEventListener('change', calculateTotalCost);
+        });
+
+        // Helper function to format date as YYYY-MM-DDTHH:MM for datetime-local input
+        function formatDateTime(date) {
+            const pad = num => String(num).padStart(2, '0');
+            return date.getFullYear() + '-' +
+                pad(date.getMonth() + 1) + '-' +
+                pad(date.getDate()) + 'T' +
+                pad(date.getHours()) + ':' +
+                pad(date.getMinutes());
+        }
+
+        function calculateTotalCost() {
+            const modal = document.getElementById('bookingModal');
+            const pricePerKwh = parseFloat(modal.dataset.pricePerKwh);
+            const start = new Date(modal.querySelector('#startTime').value);
+            const end = new Date(modal.querySelector('#endTime').value);
+
+            if (!start || !end || end <= start) {
+                modal.querySelector('#totalCost').value = 'Invalid time range';
+                return;
+            }
+
+            const hours = (end - start) / 3600000; // Convert milliseconds to hours
+            const totalCost = pricePerKwh * hours; // Cost calculation: price per kWh * hours
+
+            modal.querySelector('#totalCost').value = `£${totalCost.toFixed(2)}`;
+            modal.querySelector('#totalCostValue').value = totalCost.toFixed(2);
+        }
+
+        // HTML Escape Function
+        function escapeHtml(str) {
+            return str.toString()
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Make clearAllFilters available globally
+        window.clearAllFilters = clearAllFilters;
+
+        // Initialize the map after Google Maps API loads
+        window.initMap = initMap;
+    });
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap&libraries=places"></script>

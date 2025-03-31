@@ -70,6 +70,12 @@ class ChargePoint
             ]
         );
     }
+    public function markUnavailable($id) {
+        return $this->db->query(
+            "UPDATE charge_points SET is_available = 0 WHERE id = ?",
+            [$id]
+        );
+    }
     
     public function getAll()
     {

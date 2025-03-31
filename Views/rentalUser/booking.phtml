@@ -1,0 +1,152 @@
+<?php require __DIR__ . '/../partials/header.phtml'; ?>
+<?php require __DIR__ . '/../partials/navbar.phtml'; ?>
+
+<div class="container py-4">
+    <h2><i class="bi bi-calendar-check"></i> My Bookings</h2>
+
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show">
+            <?= $_SESSION['success'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['success']); ?>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <?= $_SESSION['error'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+
+    <?php if (empty($bookings)): ?>
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+                <h4 class="mt-3 text-muted">No bookings yet</h4>
+                <p class="text-muted">You haven't made any bookings yet. Start by finding a charge point.</p>
+                <a href="chargePoint.php" class="btn btn-primary">
+                    <i class="bi bi-lightning-charge"></i> Find Charge Points
+                </a>
+            </div>
+        </div>
+    <?php else: ?>
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Charge Point</th>
+                                <th>Date/Time</th>
+                                <th>Duration</th>
+                                <th>Cost</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($bookings as $booking): ?>
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold"><?= htmlspecialchars($booking['charge_point_address']) ?></div>
+                                        <small class="text-muted"><?= htmlspecialchars($booking['charge_point_postcode']) ?></small>
+                                        <div class="text-muted small">£<?= number_format($booking['price_per_kwh'], 2) ?>/kWh</div>
+                                    </td>
+                                    <td>
+                                        <div><?= date('D, M j', strtotime($booking['start_time'])) ?></div>
+                                        <div class="text-muted small">
+                                            <?= date('g:i A', strtotime($booking['start_time'])) ?> -
+                                            <?= date('g:i A', strtotime($booking['end_time'])) ?>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <?php
+                                        $start = new DateTime($booking['start_time']);
+                                        $end = new DateTime($booking['end_time']);
+                                        echo $start->diff($end)->format('%hh %im');
+                                        ?>
+                                    </td>
+                                    <td class="fw-bold">£<?= number_format($booking['total_cost'], 2) ?></td>
+                                    <td>
+                                        <span class="badge rounded-pill bg-<?=
+                                                                            $booking['status'] === 'confirmed' ? 'success' : ($booking['status'] === 'pending' ? 'warning' : 'danger')
+                                                                            ?>">
+                                            <?= ucfirst($booking['status']) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <?php if ($booking['status'] === 'pending'): ?>
+                                                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal<?= $booking['id'] ?>">
+                                                    <i class="bi bi-x-circle"></i> Cancel
+                                                </button>
+                                            <?php endif; ?>
+
+                                            <?php if ($booking['status'] === 'approved'): ?>
+                                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#reviewModal<?= $booking['id'] ?>">
+                                                    <i class="bi bi-chat-left-text"></i> Review
+                                                </button>
+                                            <?php endif; ?>
+
+                                            <a href="booking.php?view=<?= $booking['id'] ?>" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Cancel Modal -->
+                                <div class="modal fade" id="cancelModal<?= $booking['id'] ?>" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Cancel Booking</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Are you sure you want to cancel this booking?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <form action="booking.php" method="post">
+                                                    <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                                                    <input type="hidden" name="cancel_booking" value="1">
+                                                    <button type="submit" class="btn btn-danger">Yes, Cancel</button>
+                                                </form>
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Review Modal -->
+                                <div class="modal fade" id="reviewModal<?= $booking['id'] ?>" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Submit Review</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form action="booking.php" method="post">
+                                                    <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                                                    <textarea name="review_text" class="form-control" placeholder="Write your review..." required></textarea>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="submit" name="submit_review" class="btn btn-primary">Submit</button>
+                                                </form>
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+</div>
+
+<?php require __DIR__ . '/../partials/footer.phtml'; ?>
