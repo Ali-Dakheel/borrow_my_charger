@@ -76,25 +76,53 @@
                                             <?= ucfirst($booking['status']) ?>
                                         </span>
                                     </td>
+                                    <!-- In your actions column: -->
                                     <td>
                                         <div class="d-flex gap-2">
-                                            <?php if ($booking['status'] === 'pending'): ?>
-                                                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal<?= $booking['id'] ?>">
-                                                    <i class="bi bi-x-circle"></i> Cancel
+                                            <?php if ($booking['status'] === 'pending' || $booking['status'] === 'cancelled'): ?>
+                                                <button class="btn btn-sm <?= $booking['status'] === 'cancelled' ? 'btn-outline-success' : 'btn-outline-danger' ?>"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#statusModal<?= $booking['id'] ?>">
+                                                    <i class="bi <?= $booking['status'] === 'cancelled' ? 'bi-arrow-counterclockwise' : 'bi-x-circle' ?>"></i>
+                                                    <?= $booking['status'] === 'cancelled' ? 'Uncancel' : 'Cancel' ?>
                                                 </button>
                                             <?php endif; ?>
 
-                                            <?php if ($booking['status'] === 'approved'): ?>
+                                            <?php if ($booking['status'] === 'confirmed'): ?>
                                                 <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#reviewModal<?= $booking['id'] ?>">
                                                     <i class="bi bi-chat-left-text"></i> Review
                                                 </button>
                                             <?php endif; ?>
-
-                                            <a href="booking.php?view=<?= $booking['id'] ?>" class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-eye"></i> View
-                                            </a>
                                         </div>
                                     </td>
+
+                                    <!-- Updated Status Modal -->
+                                    <div class="modal fade" id="statusModal<?= $booking['id'] ?>" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">
+                                                        <?= $booking['status'] === 'cancelled' ? 'Restore Booking' : 'Cancel Booking' ?>
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    Are you sure you want to <?= $booking['status'] === 'cancelled' ? 'restore' : 'cancel' ?> this booking?
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <form action="booking.php" method="post">
+                                                        <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                                                        <input type="hidden" name="current_status" value="<?= $booking['status'] ?>">
+                                                        <input type="hidden" name="cancel_booking" value="1">
+                                                        <button type="submit" class="btn <?= $booking['status'] === 'cancelled' ? 'btn-success' : 'btn-danger' ?>">
+                                                            Yes, <?= $booking['status'] === 'cancelled' ? 'Restore' : 'Cancel' ?>
+                                                        </button>
+                                                    </form>
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </tr>
 
                                 <!-- Cancel Modal -->

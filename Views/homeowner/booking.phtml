@@ -1,0 +1,188 @@
+<?php require __DIR__ . '/../partials/header.phtml'; ?>
+<?php require __DIR__ . '/../partials/navbar.phtml'; ?>
+
+<div class="container py-4">
+    <h2><i class="bi bi-calendar-check"></i> Booking Requests</h2>
+
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show">
+            <?= $_SESSION['success'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['success']); ?>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <?= $_SESSION['error'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+
+    <?php if (empty($bookings)): ?>
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+                <h4 class="mt-3 text-muted">No booking requests</h4>
+                <p class="text-muted">You don't have any booking requests yet.</p>
+            </div>
+        </div>
+    <?php else: ?>
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Renter</th>
+                                <th>Charge Point</th>
+                                <th>Date/Time</th>
+                                <th>Duration</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($bookings as $booking): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($booking['renter_name']) ?></td>
+                                    <td>
+                                        <div class="fw-bold"><?= htmlspecialchars($booking['charge_point_address']) ?></div>
+                                        <small class="text-muted"><?= htmlspecialchars($booking['charge_point_postcode']) ?></small>
+                                    </td>
+                                    <td>
+                                        <div><?= date('D, M j', strtotime($booking['start_time'])) ?></div>
+                                        <div class="text-muted small">
+                                            <?= date('g:i A', strtotime($booking['start_time'])) ?> -
+                                            <?= date('g:i A', strtotime($booking['end_time'])) ?>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <?php
+                                        $start = new DateTime($booking['start_time']);
+                                        $end = new DateTime($booking['end_time']);
+                                        echo $start->diff($end)->format('%hh %im');
+                                        ?>
+                                    </td>
+                                    <td class="fw-bold">£<?= number_format($booking['total_cost'], 2) ?></td>
+                                    <td>
+                                        <span class="badge rounded-pill bg-<?=
+                                                                            $booking['status'] === 'approved' ? 'success' : ($booking['status'] === 'pending' ? 'warning' : 'danger')
+                                                                            ?>">
+                                            <?= ucfirst($booking['status']) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <?php if ($booking['status'] !== 'approved'): ?>
+                                                <button class="btn btn-sm btn-outline-success"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#approveModal<?= $booking['id'] ?>">
+                                                    <i class="bi bi-check-circle"></i> Approve
+                                                </button>
+                                            <?php endif; ?>
+
+                                            <?php if ($booking['status'] !== 'cancelled'): ?>
+                                                <button class="btn btn-sm btn-outline-danger"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#rejectModal<?= $booking['id'] ?>">
+                                                    <i class="bi bi-x-circle"></i> Reject
+                                                </button>
+                                            <?php endif; ?>
+
+                                            <?php if ($booking['status'] !== 'pending'): ?>
+                                                <button class="btn btn-sm btn-outline-warning"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#pendingModal<?= $booking['id'] ?>">
+                                                    <i class="bi bi-arrow-counterclockwise"></i> Pending
+                                                </button>
+                                            <?php endif; ?>
+
+                                        </div>
+
+                                        <!-- Approve Modal -->
+                                        <div class="modal fade" id="approveModal<?= $booking['id'] ?>" tabindex="-1">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Approve Booking</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        Are you sure you want to approve this booking request?
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <form action="booking.php" method="post">
+                                                            <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                                                            <input type="hidden" name="new_status" value="approved">
+                                                            <input type="hidden" name="update_status" value="1">
+                                                            <button type="submit" class="btn btn-success">Approve</button>
+                                                        </form>
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Reject Modal -->
+                                        <div class="modal fade" id="rejectModal<?= $booking['id'] ?>" tabindex="-1">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Reject Booking</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        Are you sure you want to reject this booking request?
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <form action="booking.php" method="post">
+                                                            <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                                                            <input type="hidden" name="new_status" value="cancelled">
+                                                            <input type="hidden" name="update_status" value="1">
+                                                            <button type="submit" class="btn btn-danger">Reject</button>
+                                                        </form>
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Pending Modal -->
+                                        <div class="modal fade" id="pendingModal<?= $booking['id'] ?>" tabindex="-1">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Mark as Pending</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        Are you sure you want to mark this booking as pending?
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <form action="booking.php" method="post">
+                                                            <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                                                            <input type="hidden" name="new_status" value="pending">
+                                                            <input type="hidden" name="update_status" value="1">
+                                                            <button type="submit" class="btn btn-warning">Pending</button>
+                                                        </form>
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+</div>
+
+<?php require __DIR__ . '/../partials/footer.phtml'; ?>

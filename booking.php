@@ -3,6 +3,7 @@ require_once __DIR__ . '/Core/bootstrap.php';
 require_once 'Models/Booking.php';
 require_once 'Models/ChargePoint.php';
 
+
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
@@ -11,10 +12,10 @@ if (!isset($_SESSION['user_id'])) {
 $bookingModel = new Booking($db);
 $chargePointModel = new ChargePoint($db);
 
-// Handle booking creation
+// Handle all booking actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['create_booking'])) {
-        try {
+    try {
+        if (isset($_POST['create_booking'])) {
             $bookingData = [
                 'user_id' => $_POST['user_id'],
                 'charge_point_id' => $_POST['charge_point_id'],
@@ -23,44 +24,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'total_cost' => $_POST['total_cost'],
                 'status' => 'pending'
             ];
-
             $bookingModel->create($bookingData);
             $_SESSION['success'] = 'Booking created successfully!';
-        } catch (Exception $e) {
-            $_SESSION['error'] = 'Booking failed: ' . $e->getMessage();
+        } 
+        elseif (isset($_POST['cancel_booking'])) {
+            $newStatus = ($_POST['current_status'] === 'cancelled') ? 'pending' : 'cancelled';
+            $bookingModel->updateBookingStatus($_POST['booking_id'], $newStatus);
+            $action = ($newStatus === 'cancelled') ? 'cancelled' : 'restored';
+            $_SESSION['success'] = "Booking {$action} successfully!";
         }
-    } 
-    
-    // Handle booking cancellation
-    elseif (isset($_POST['cancel_booking'])) {
-        try {
-            $bookingModel->cancelBooking($_POST['booking_id']);
-            $_SESSION['success'] = 'Booking cancelled successfully!';
-        } catch (Exception $e) {
-            $_SESSION['error'] = 'Cancellation failed: ' . $e->getMessage();
+        elseif (isset($_POST['update_status'])) {
+            $bookingModel->updateBookingStatus($_POST['booking_id'], $_POST['new_status']);
+            $_SESSION['success'] = "Booking status updated to {$_POST['new_status']}";
         }
+        elseif (isset($_POST['submit_review'])) {
+            // Handle review submission
+            $_SESSION['success'] = 'Review submitted successfully!';
+        }
+    } catch (Exception $e) {
+        $_SESSION['error'] = $e->getMessage();
     }
     
     header('Location: booking.php');
     exit();
 }
-// Handle review submission
-elseif (isset($_POST['submit_review'])) {
-    try {
-        $reviewData = [
-            'booking_id' => $_POST['booking_id'],
-            'user_id' => $_SESSION['user_id'],
-            'review_text' => $_POST['review_text']
-        ];
-        // $bookingModel->submitReview($reviewData);
-        $_SESSION['success'] = 'Review submitted successfully!';
-    } catch (Exception $e) {
-        $_SESSION['error'] = 'Failed to submit review: ' . $e->getMessage();
-    }
+
+// Get the appropriate bookings based on user role
+if ($_SESSION['role'] === 'homeowner') {
+    $bookings = $bookingModel->getByHomeownerIdWithDetails($_SESSION['user_id']);
+    require "Views/homeowner/booking.phtml";
+} else {
+    // Regular user view
+    $bookings = $bookingModel->getByRentalUserIdWithDetails($_SESSION['user_id']);
+    require "Views/rentalUser/booking.phtml";
 }
-
-
-// Fetch all bookings for the logged-in user
-$bookings = $bookingModel->getByRentalUserIdWithDetails($_SESSION['user_id']);
-
-require "Views/rentalUser/booking.phtml";
