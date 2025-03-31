@@ -1,0 +1,149 @@
+<?php
+require_once __DIR__ . '/Core/bootstrap.php';
+require_once 'Models/ChargePoint.php';
+require_once 'Models/User.php';
+
+$chargePointModel = new ChargePoint($db);
+$usersModel = new User($db);
+$allUsers = $usersModel->getAllUsers();
+
+if ($_SESSION['role'] === 'homeowner') {
+    $chargePoint = $chargePointModel->getByHomeOwnerById($_SESSION['user_id']);
+}
+
+// Handle AJAX search requests
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'search') {
+    header('Content-Type: application/json');
+    
+    try {
+        // Get parameters (only those that were provided)
+        $location = $_GET['location'] ?? '';
+        $minPrice = isset($_GET['minPrice']) ? floatval($_GET['minPrice']) : null;
+        $maxPrice = isset($_GET['maxPrice']) ? floatval($_GET['maxPrice']) : null;
+        $availableOnly = filter_var($_GET['availableOnly'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $latitude = isset($_GET['latitude']) ? floatval($_GET['latitude']) : null;
+        $longitude = isset($_GET['longitude']) ? floatval($_GET['longitude']) : null;
+        
+        // Get all charge points
+        $chargePoints = $chargePointModel->getAll();
+        
+        // Filter results
+        $filtered = array_filter($chargePoints, function($point) use ($location, $minPrice, $maxPrice, $availableOnly, $latitude, $longitude) {
+            // Availability check
+            if ($availableOnly && !$point['is_available']) return false;
+            
+            // Price check (only if filters provided)
+            $price = floatval($point['price_per_kwh']);
+            if ($minPrice !== null && $price < $minPrice) return false;
+            if ($maxPrice !== null && $price > $maxPrice) return false;
+            
+            // Location text search
+            if (!empty($location) && 
+                stripos($point['address'], $location) === false && 
+                stripos($point['postcode'], $location) === false) {
+                return false;
+            }
+            
+            // Coordinate checks (only if filters provided)
+            if ($latitude !== null && abs(floatval($point['latitude']) - $latitude) > 0.1) {
+                return false;
+            }
+            if ($longitude !== null && abs(floatval($point['longitude']) - $longitude) > 0.1) {
+                return false;
+            }
+            
+            return true;
+        });
+        
+        // Format results
+        $result = array_map(function($point) {
+            return [
+                'id' => $point['id'],
+                'address' => $point['address'],
+                'postcode' => $point['postcode'],
+                'latitude' => floatval($point['latitude']),
+                'longitude' => floatval($point['longitude']),
+                'price_per_kwh' => floatval($point['price_per_kwh']),
+                'is_available' => (bool)$point['is_available'],
+                'image_path' => $point['image_path'] ?? null
+            ];
+        }, $filtered);
+        
+        echo json_encode(array_values($result));
+        exit;
+        
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => $e->getMessage()]);
+        exit;
+    }
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['action'])) {
+        switch ($_POST['action']) {
+            case 'create':
+                $chargePointModel->create([
+                    'homeowner_id' => $_POST['homeowner_id'],
+                    'address' => $_POST['address'],
+                    'postcode' => $_POST['postcode'],
+                    'latitude' => $_POST['latitude'],
+                    'longitude' => $_POST['longitude'],
+                    'price_per_kwh' => $_POST['price_per_kwh'],
+                    'is_available' => isset($_POST['is_available']) ? 1 : 0,
+                    'image_path' => uploadImage($_FILES['image'] ?? null)
+                ]);
+                header("Location: chargePoint.php?success=created");
+                exit;
+            case 'update':
+                $chargePointModel->update([
+                    'id' => $_POST['id'],
+                    'homeowner_id' => $_POST['homeowner_id'],
+                    'address' => $_POST['address'],
+                    'postcode' => $_POST['postcode'],
+                    'latitude' => $_POST['latitude'],
+                    'longitude' => $_POST['longitude'],
+                    'price_per_kwh' => $_POST['price_per_kwh'],
+                    'is_available' => isset($_POST['is_available']) ? 1 : 0,
+                    'image_path' => uploadImage($_FILES['image'] ?? null) ?? $_POST['existing_image']
+                ]);
+                header("Location: chargePoint.php?success=updated");
+                exit;
+            case 'delete':
+                $chargePointModel->delete($_POST['id']);
+                header("Location: chargePoint.php?success=deleted");
+                exit;
+        }
+    }
+}
+
+$chargePoints = $chargePointModel->getAll();
+
+function uploadImage($file) {
+    if ($file && $file['error'] === 0) {
+        $targetDir = "uploads/";
+        $fileName = uniqid() . "_" . basename($file["name"]);
+        $targetFilePath = $targetDir . $fileName;
+        $imageFileType = strtolower(pathinfo($targetFilePath, PATHINFO_EXTENSION));
+
+        $validExtensions = ['jpg', 'jpeg', 'png'];
+        if (!in_array($imageFileType, $validExtensions)) {
+            throw new Exception("Invalid image format. Only JPG, JPEG, and PNG allowed.");
+        }
+
+        if (!move_uploaded_file($file["tmp_name"], $targetFilePath)) {
+            throw new Exception("Image upload failed.");
+        }
+
+        return $targetFilePath;
+    }
+    return null;
+}
+
+if ($_SESSION['role'] === 'admin') {
+    require "Views/admin/chargePoint.phtml";
+} elseif ($_SESSION['role'] === 'homeowner') {
+    require "Views/homeowner/chargePoint.phtml";
+} elseif ($_SESSION['role'] === 'user') {
+    require "Views/rentalUser/chargePoint.phtml"; 
+}
+?>
