@@ -14,7 +14,7 @@ if ($_SESSION['role'] === 'homeowner') {
 // Handle AJAX search requests
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'search') {
     header('Content-Type: application/json');
-    
+
     try {
         // Get parameters (only those that were provided)
         $location = $_GET['location'] ?? '';
@@ -23,27 +23,29 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'search') {
         $availableOnly = filter_var($_GET['availableOnly'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $latitude = isset($_GET['latitude']) ? floatval($_GET['latitude']) : null;
         $longitude = isset($_GET['longitude']) ? floatval($_GET['longitude']) : null;
-        
+
         // Get all charge points
         $chargePoints = $chargePointModel->getAll();
-        
+
         // Filter results
-        $filtered = array_filter($chargePoints, function($point) use ($location, $minPrice, $maxPrice, $availableOnly, $latitude, $longitude) {
+        $filtered = array_filter($chargePoints, function ($point) use ($location, $minPrice, $maxPrice, $availableOnly, $latitude, $longitude) {
             // Availability check
             if ($availableOnly && !$point['is_available']) return false;
-            
+
             // Price check (only if filters provided)
             $price = floatval($point['price_per_kwh']);
             if ($minPrice !== null && $price < $minPrice) return false;
             if ($maxPrice !== null && $price > $maxPrice) return false;
-            
+
             // Location text search
-            if (!empty($location) && 
-                stripos($point['address'], $location) === false && 
-                stripos($point['postcode'], $location) === false) {
+            if (
+                !empty($location) &&
+                stripos($point['address'], $location) === false &&
+                stripos($point['postcode'], $location) === false
+            ) {
                 return false;
             }
-            
+
             // Coordinate checks (only if filters provided)
             if ($latitude !== null && abs(floatval($point['latitude']) - $latitude) > 0.1) {
                 return false;
@@ -51,12 +53,12 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'search') {
             if ($longitude !== null && abs(floatval($point['longitude']) - $longitude) > 0.1) {
                 return false;
             }
-            
+
             return true;
         });
-        
+
         // Format results
-        $result = array_map(function($point) {
+        $result = array_map(function ($point) {
             return [
                 'id' => $point['id'],
                 'address' => $point['address'],
@@ -68,10 +70,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'search') {
                 'image_path' => $point['image_path'] ?? null
             ];
         }, $filtered);
-        
+
         echo json_encode(array_values($result));
         exit;
-        
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode(['error' => $e->getMessage()]);
@@ -118,25 +119,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $chargePoints = $chargePointModel->getAll();
 
-function uploadImage($file) {
-    if ($file && $file['error'] === 0) {
-        $targetDir = "uploads/";
-        $fileName = uniqid() . "_" . basename($file["name"]);
-        $targetFilePath = $targetDir . $fileName;
-        $imageFileType = strtolower(pathinfo($targetFilePath, PATHINFO_EXTENSION));
-
-        $validExtensions = ['jpg', 'jpeg', 'png'];
-        if (!in_array($imageFileType, $validExtensions)) {
-            throw new Exception("Invalid image format. Only JPG, JPEG, and PNG allowed.");
-        }
-
-        if (!move_uploaded_file($file["tmp_name"], $targetFilePath)) {
-            throw new Exception("Image upload failed.");
-        }
-
-        return $targetFilePath;
+function uploadImage($file)
+{
+    if (! $file || $file['error'] !== UPLOAD_ERR_OK) {
+        return null;
     }
-    return null;
+
+    $targetDir = __DIR__ . '/assets/images/';
+    if (! is_dir($targetDir)) {
+        mkdir($targetDir, 0755, true);
+    }
+
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+    if (! in_array($ext, $allowed, true)) {
+        throw new Exception("Invalid image format. Allowed: " . implode(', ', $allowed));
+    }
+
+    $basename = bin2hex(random_bytes(8));
+    $filename = "{$basename}.{$ext}";
+    $targetFs = $targetDir  . $filename;
+    $relative = "assets/images/{$filename}";
+    if (! move_uploaded_file($file['tmp_name'], $targetFs)) {
+        throw new Exception("Failed to move uploaded file.");
+    }
+
+    return $relative;
 }
 
 if ($_SESSION['role'] === 'admin') {
@@ -144,6 +152,5 @@ if ($_SESSION['role'] === 'admin') {
 } elseif ($_SESSION['role'] === 'homeowner') {
     require "Views/homeowner/chargePoint.phtml";
 } elseif ($_SESSION['role'] === 'user') {
-    require "Views/rentalUser/chargePoint.phtml"; 
+    require "Views/rentalUser/chargePoint.phtml";
 }
-?>

@@ -168,43 +168,77 @@
     </div>
 </div>
 
+<!-- Add Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+<!-- Add Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<!-- Add Leaflet Control Geocoder for address search functionality -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-
         let map, markers = [];
+        let markerLayer = L.layerGroup();
         let currentLocation = {
-            lat: 51.5074,
-            lng: -0.1278
-        }; // Default to London
+            lat: 26.0667,
+            lng: 50.5577
+        }; 
+
+        // Custom charging station icon
+        const chargingIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
 
         // Initialize Map
         function initMap() {
-            map = new google.maps.Map(document.getElementById('map'), {
-                center: currentLocation,
-                zoom: 12,
-                styles: [{
-                    featureType: "poi",
-                    elementType: "labels",
-                    stylers: [{
-                        visibility: "off"
-                    }]
-                }]
-            });
-
+            // Create the map
+            map = L.map('map').setView([currentLocation.lat, currentLocation.lng], 12);
+            
+            // Add OpenStreetMap tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
+            
+            // Add geocoder control for address searching
+            L.Control.geocoder({
+                placeholder: "Search for a location...",
+                errorMessage: "Nothing found.",
+                defaultMarkGeocode: false
+            })
+            .on('markgeocode', function(e) {
+                const { center, bbox } = e.geocode;
+                document.getElementById('latitude').value = center.lat;
+                document.getElementById('longitude').value = center.lng;
+                loadChargePoints();
+                map.fitBounds(bbox);
+            })
+            .addTo(map);
+            
+            // Add the marker layer to the map
+            markerLayer.addTo(map);
+            
             // Add markers for initial charge points
             updateMapMarkers(<?= json_encode(array_filter($chargePoints, function ($p) {
-                                    return $p['is_available'];
-                                })) ?>);
-
+                return $p['is_available'];
+            })) ?>);
+            
             // Try to get user's current location
             getCurrentLocation();
-
+            
             // Add click listener to set coordinates
-            map.addListener('click', (e) => {
-                const latLng = e.latLng;
-                document.getElementById('latitude').value = latLng.lat();
-                document.getElementById('longitude').value = latLng.lng();
+            map.on('click', (e) => {
+                const latLng = e.latlng;
+                document.getElementById('latitude').value = latLng.lat;
+                document.getElementById('longitude').value = latLng.lng;
                 loadChargePoints();
             });
         }
@@ -219,7 +253,7 @@
                     };
                     document.getElementById('latitude').value = currentLocation.lat;
                     document.getElementById('longitude').value = currentLocation.lng;
-                    map.setCenter(currentLocation);
+                    map.setView([currentLocation.lat, currentLocation.lng], 12);
                     loadChargePoints();
                 }, showError);
             }
@@ -351,7 +385,15 @@
                         </div>
                     </div>
                     <div class="card-footer bg-white border-top-0">
-                        <a href="booking.php?charge_point_id=${point.id}" class="btn btn-primary w-100">
+                        <a href="#" class="btn btn-primary w-100"
+                           data-bs-toggle="modal"
+                           data-bs-target="#bookingModal"
+                           data-charge-point-id="${point.id}"
+                           data-price="${point.price_per_kwh}"
+                           data-address="${escapeHtml(point.address)}"
+                           data-postcode="${escapeHtml(point.postcode)}"
+                           data-lat="${point.latitude}"
+                           data-lng="${point.longitude}">
                             <i class="bi bi-calendar-check"></i> Book Now
                         </a>
                     </div>
@@ -364,40 +406,84 @@
         // Update Map Markers
         function updateMapMarkers(points) {
             // Clear existing markers
-            markers.forEach(marker => marker.setMap(null));
+            markerLayer.clearLayers();
             markers = [];
 
             // Add new markers
             points.forEach(point => {
-                const marker = new google.maps.Marker({
-                    position: {
-                        lat: parseFloat(point.latitude),
-                        lng: parseFloat(point.longitude)
-                    },
-                    map,
-                    title: point.address,
-                    icon: {
-                        url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-                        scaledSize: new google.maps.Size(32, 32)
-                    }
+                const latLng = [parseFloat(point.latitude), parseFloat(point.longitude)];
+                const marker = L.marker(latLng, {
+                    icon: chargingIcon,
+                    title: point.address
                 });
+                
+                // Create popup content
+                const popupContent = `
+                    <div class="popup-content">
+                        <h6>${escapeHtml(point.address)}</h6>
+                        <p class="mb-1">${escapeHtml(point.postcode)}</p>
+                        <p class="mb-1">£${point.price_per_kwh.toFixed(2)}/kWh</p>
+                        <button class="btn btn-sm btn-primary mt-2 book-from-map" 
+                                data-charge-point-id="${point.id}"
+                                data-price="${point.price_per_kwh}"
+                                data-address="${escapeHtml(point.address)}"
+                                data-postcode="${escapeHtml(point.postcode)}"
+                                data-lat="${point.latitude}"
+                                data-lng="${point.longitude}">
+                            Book Now
+                        </button>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent);
+                
+                // Add click event to "Book Now" button in popup
+                marker.on('popupopen', function() {
+                    document.querySelectorAll('.book-from-map').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
+                            
+                            // Set data for the modal
+                            document.getElementById('modalChargePointId').value = this.dataset.chargePointId;
+                            document.getElementById('modalChargePointPrice').textContent = parseFloat(this.dataset.price).toFixed(2);
+                            document.getElementById('modalChargePointAddress').textContent = this.dataset.address;
+                            document.getElementById('modalChargePointPostcode').textContent = this.dataset.postcode;
+                            
+                            const bookingModal = document.getElementById('bookingModal');
+                            bookingModal.dataset.pricePerKwh = this.dataset.price;
+                            
+                            // Set initial start and end times (1 hour apart)
+                            const now = new Date();
+                            const endTime = new Date(now.getTime() + 3600000); // 1 hour later
+                            document.getElementById('startTime').value = formatDateTime(now);
+                            document.getElementById('endTime').value = formatDateTime(endTime);
+                            
+                            // Calculate total cost
+                            calculateTotalCost();
+                            
+                            // Show the modal
+                            modal.show();
+                        });
+                    });
+                });
+                
+                markerLayer.addLayer(marker);
                 markers.push(marker);
             });
 
             // Center map on markers if available
             if (points.length > 0) {
-                const bounds = new google.maps.LatLngBounds();
-                markers.forEach(marker => bounds.extend(marker.getPosition()));
-                map.fitBounds(bounds);
+                const group = L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1)); // Add 10% padding
             } else {
-                map.setCenter(currentLocation);
-                map.setZoom(12);
+                map.setView([currentLocation.lat, currentLocation.lng], 12);
             }
         }
 
         // Add modal show handler
         document.getElementById('bookingModal').addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
+            if (!button) return; // Skip if opened programmatically
 
             // Read details from button's data attributes
             const chargePointId = button.dataset.chargePointId;
@@ -471,11 +557,9 @@
         // Make clearAllFilters available globally
         window.clearAllFilters = clearAllFilters;
 
-        // Initialize the map after Google Maps API loads
-        window.initMap = initMap;
+        // Initialize the map
+        initMap();
     });
 </script>
-
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap&libraries=places"></script>
 
 <?php require __DIR__ . '/../partials/footer.phtml' ?>

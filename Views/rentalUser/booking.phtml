@@ -41,7 +41,7 @@
                                 <th>Charge Point</th>
                                 <th>Date/Time</th>
                                 <th>Duration</th>
-                                <th>Cost</th>
+                                <th>Total (£)</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -57,7 +57,7 @@
                                     <td>
                                         <div><?= date('D, M j', strtotime($booking['start_time'])) ?></div>
                                         <div class="text-muted small">
-                                            <?= date('g:i A', strtotime($booking['start_time'])) ?> -
+                                            <?= date('g:i A', strtotime($booking['start_time'])) ?> - 
                                             <?= date('g:i A', strtotime($booking['end_time'])) ?>
                                         </div>
                                     </td>
@@ -71,12 +71,13 @@
                                     <td class="fw-bold">£<?= number_format($booking['total_cost'], 2) ?></td>
                                     <td>
                                         <span class="badge rounded-pill bg-<?=
-                                                                            $booking['status'] === 'confirmed' ? 'success' : ($booking['status'] === 'pending' ? 'warning' : 'danger')
-                                                                            ?>">
+                                            $booking['status'] === 'approved' ? 'success' : 
+                                            ($booking['status'] === 'pending' ? 'warning' : 
+                                            ($booking['status'] === 'cancelled' ? 'secondary' : 'danger'))
+                                        ?>">
                                             <?= ucfirst($booking['status']) ?>
                                         </span>
                                     </td>
-                                    <!-- In your actions column: -->
                                     <td>
                                         <div class="d-flex gap-2">
                                             <?php if ($booking['status'] === 'pending' || $booking['status'] === 'cancelled'): ?>
@@ -88,65 +89,47 @@
                                                 </button>
                                             <?php endif; ?>
 
-                                            <?php if ($booking['status'] === 'confirmed'): ?>
+                                            <?php if ($booking['status'] === 'approved'): ?>
                                                 <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#reviewModal<?= $booking['id'] ?>">
                                                     <i class="bi bi-chat-left-text"></i> Review
                                                 </button>
                                             <?php endif; ?>
+
+                                            <a href="booking_details.php?id=<?= $booking['id'] ?>" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
                                         </div>
                                     </td>
-
-                                    <!-- Updated Status Modal -->
-                                    <div class="modal fade" id="statusModal<?= $booking['id'] ?>" tabindex="-1">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">
-                                                        <?= $booking['status'] === 'cancelled' ? 'Restore Booking' : 'Cancel Booking' ?>
-                                                    </h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    Are you sure you want to <?= $booking['status'] === 'cancelled' ? 'restore' : 'cancel' ?> this booking?
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <form action="booking.php" method="post">
-                                                        <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
-                                                        <input type="hidden" name="current_status" value="<?= $booking['status'] ?>">
-                                                        <input type="hidden" name="cancel_booking" value="1">
-                                                        <button type="submit" class="btn <?= $booking['status'] === 'cancelled' ? 'btn-success' : 'btn-danger' ?>">
-                                                            Yes, <?= $booking['status'] === 'cancelled' ? 'Restore' : 'Cancel' ?>
-                                                        </button>
-                                                    </form>
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </tr>
 
-                                <!-- Cancel Modal -->
-                                <div class="modal fade" id="cancelModal<?= $booking['id'] ?>" tabindex="-1">
+                                <!-- Status Modal (for Cancel/Uncancel) -->
+                                <div class="modal fade" id="statusModal<?= $booking['id'] ?>" tabindex="-1">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h5 class="modal-title">Cancel Booking</h5>
+                                                <h5 class="modal-title">
+                                                    <?= $booking['status'] === 'cancelled' ? 'Restore Booking' : 'Cancel Booking' ?>
+                                                </h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body">
-                                                Are you sure you want to cancel this booking?
+                                                Are you sure you want to <?= $booking['status'] === 'cancelled' ? 'restore' : 'cancel' ?> this booking?
                                             </div>
                                             <div class="modal-footer">
                                                 <form action="booking.php" method="post">
                                                     <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                                                    <input type="hidden" name="current_status" value="<?= $booking['status'] ?>">
                                                     <input type="hidden" name="cancel_booking" value="1">
-                                                    <button type="submit" class="btn btn-danger">Yes, Cancel</button>
+                                                    <button type="submit" class="btn <?= $booking['status'] === 'cancelled' ? 'btn-success' : 'btn-danger' ?>">
+                                                        Yes, <?= $booking['status'] === 'cancelled' ? 'Restore' : 'Cancel' ?>
+                                                    </button>
                                                 </form>
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+
                                 <!-- Review Modal -->
                                 <div class="modal fade" id="reviewModal<?= $booking['id'] ?>" tabindex="-1">
                                     <div class="modal-dialog modal-dialog-centered">
@@ -158,16 +141,24 @@
                                             <div class="modal-body">
                                                 <form action="booking.php" method="post">
                                                     <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
-                                                    <textarea name="review_text" class="form-control" placeholder="Write your review..." required></textarea>
+                                                    <div class="mb-3">
+                                                        <label for="rating<?= $booking['id'] ?>" class="form-label">Rating (1-5)</label>
+                                                        <input type="number" min="1" max="5" class="form-control" id="rating<?= $booking['id'] ?>" name="rating" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="reviewText<?= $booking['id'] ?>" class="form-label">Review</label>
+                                                        <textarea name="comment" id="reviewText<?= $booking['id'] ?>" class="form-control" placeholder="Write your review..." required></textarea>
+                                                    </div>
+                                                    <button type="submit" name="submit_review" class="btn btn-primary">Submit</button>
+                                                </form>
                                             </div>
                                             <div class="modal-footer">
-                                                <button type="submit" name="submit_review" class="btn btn-primary">Submit</button>
-                                                </form>
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+
                             <?php endforeach; ?>
                         </tbody>
                     </table>
