@@ -2,7 +2,9 @@
 <?php require __DIR__ . '/../partials/navbar.phtml'; ?>
 
 <div class="container py-4">
-    <h2><i class="bi bi-calendar-check"></i> My Bookings</h2>
+<div class="d-flex justify-content-start gap-4 mb-4">
+<i class="bi bi-calendar-check h2"></i><h2>My Bookings</h2>
+    </div>
 
     <?php if (isset($_SESSION['success'])): ?>
         <div class="alert alert-success alert-dismissible fade show">
@@ -89,15 +91,9 @@
                                                 </button>
                                             <?php endif; ?>
 
-                                            <?php if ($booking['status'] === 'approved'): ?>
-                                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#reviewModal<?= $booking['id'] ?>">
-                                                    <i class="bi bi-chat-left-text"></i> Review
-                                                </button>
-                                            <?php endif; ?>
-
-                                            <a href="booking_details.php?id=<?= $booking['id'] ?>" class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-eye"></i> View
-                                            </a>
+                                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#reviewModal<?= $booking['id'] ?>">
+                                                <i class="bi bi-chat-left-text"></i> Review
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -117,9 +113,9 @@
                                             </div>
                                             <div class="modal-footer">
                                                 <form action="booking.php" method="post">
+                                                    <input type="hidden" name="action" value="cancel_booking">
                                                     <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
                                                     <input type="hidden" name="current_status" value="<?= $booking['status'] ?>">
-                                                    <input type="hidden" name="cancel_booking" value="1">
                                                     <button type="submit" class="btn <?= $booking['status'] === 'cancelled' ? 'btn-success' : 'btn-danger' ?>">
                                                         Yes, <?= $booking['status'] === 'cancelled' ? 'Restore' : 'Cancel' ?>
                                                     </button>
@@ -140,6 +136,7 @@
                                             </div>
                                             <div class="modal-body">
                                                 <form action="booking.php" method="post">
+                                                    <input type="hidden" name="action" value="submit_review">
                                                     <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
                                                     <div class="mb-3">
                                                         <label for="rating<?= $booking['id'] ?>" class="form-label">Rating (1-5)</label>
@@ -149,7 +146,7 @@
                                                         <label for="reviewText<?= $booking['id'] ?>" class="form-label">Review</label>
                                                         <textarea name="comment" id="reviewText<?= $booking['id'] ?>" class="form-control" placeholder="Write your review..." required></textarea>
                                                     </div>
-                                                    <button type="submit" name="submit_review" class="btn btn-primary">Submit</button>
+                                                    <button type="submit" class="btn btn-primary">Submit</button>
                                                 </form>
                                             </div>
                                             <div class="modal-footer">

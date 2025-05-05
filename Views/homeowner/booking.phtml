@@ -2,7 +2,9 @@
 <?php require __DIR__ . '/../partials/navbar.phtml'; ?>
 
 <div class="container py-4">
-    <h2><i class="bi bi-calendar-check"></i> Booking Requests</h2>
+<div class="d-flex justify-content-start gap-4 mb-4">
+<i class="bi bi-calendar-check h2"></i><h2>My Bookings</h2>
+    </div>
 
     <?php if (isset($_SESSION['success'])): ?>
         <div class="alert alert-success alert-dismissible fade show">
@@ -117,7 +119,7 @@
                                                         <form action="booking.php" method="post">
                                                             <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
                                                             <input type="hidden" name="new_status" value="approved">
-                                                            <input type="hidden" name="update_status" value="1">
+                                                            <input type="hidden" name="action" value="update_status">
                                                             <button type="submit" class="btn btn-success">Approve</button>
                                                         </form>
                                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -141,7 +143,7 @@
                                                         <form action="booking.php" method="post">
                                                             <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
                                                             <input type="hidden" name="new_status" value="cancelled">
-                                                            <input type="hidden" name="update_status" value="1">
+                                                            <input type="hidden" name="action" value="update_status">
                                                             <button type="submit" class="btn btn-danger">Reject</button>
                                                         </form>
                                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -165,7 +167,7 @@
                                                         <form action="booking.php" method="post">
                                                             <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
                                                             <input type="hidden" name="new_status" value="pending">
-                                                            <input type="hidden" name="update_status" value="1">
+                                                            <input type="hidden" name="action" value="update_status">
                                                             <button type="submit" class="btn btn-warning">Pending</button>
                                                         </form>
                                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

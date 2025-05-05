@@ -4,7 +4,11 @@
         <div class="text-center mb-4">
             <h1 class="h3 mb-3 fw-normal">Create an Account</h1>
         </div>
-
+        <?php if (!empty($message)): ?>
+            <div class="alert <?= strpos($message, 'successful') !== false ? 'alert-success' : 'alert-danger' ?>" role="alert">
+                <?= htmlspecialchars($message) ?>
+            </div>
+        <?php endif; ?>
         <form action="../register.php" method="POST">
             <!-- Name Field -->
             <div class="form-floating mb-3">

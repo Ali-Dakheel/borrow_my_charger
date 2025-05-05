@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/Core/bootstrap.php';
-
+$message = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['username'], $_POST['name'], $_POST['password'], $_POST['confirm_password'], $_POST['role'])) {
         // Retrieve and trim input values
@@ -12,27 +12,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Validate that the passwords match
         if ($password !== $confirmPassword) {
-            echo "Passwords do not match!";
-            exit;
-        }
-
-        // Hash the password
-        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-
-        // Prepare the SQL query and execute it with PDO parameters
-        $sql = "INSERT INTO users (username, name, password, role, status) VALUES (?, ?, ?, ?, 'active')";
-        $result = $db->query($sql, [$username, $name, $hashedPassword, $role]);
-
-        // Check if a row was inserted
-        if ($result->statement->rowCount() > 0) {
-            echo "Registration successful!";
+            $message = 'Passwords do not match!';
         } else {
-            echo "Registration failed!";
+            // Hash the password
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+
+            // Prepare the SQL query and execute it with PDO parameters
+            $sql = "INSERT INTO users (username, name, password, role, status) VALUES (?, ?, ?, ?, 'active')";
+            $result = $db->query($sql, [$username, $name, $hashedPassword, $role]);
+
+            // Check if a row was inserted
+            if ($result->statement->rowCount() > 0) {
+                $message = 'Registration successful!';
+            } else {
+                $message = 'Registration failed!';
+            }
         }
     } else {
-        echo "All fields are required!";
+        $message = 'All fields are required!';
     }
 }
 
 require "Views/register.phtml";
-?>

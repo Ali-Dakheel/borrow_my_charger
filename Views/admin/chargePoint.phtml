@@ -3,7 +3,7 @@
 
 <!-- Success Messages -->
 <?php if (isset($_GET['success'])): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
         <?= match ($_GET['success']) {
             'created' => 'Charge point created successfully!',
             'updated' => 'Charge point updated successfully!',
@@ -14,6 +14,12 @@
     </div>
 <?php endif; ?>
 
+<?php if (isset($_GET['error']) && $_GET['error'] === 'homeowner_already_has_charge_point'): ?>
+    <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+        This homeowner already has a charge point assigned.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
 
 <div class="container-fluid mt-4">
 
@@ -76,6 +82,19 @@
                 </tbody>
             </table>
         </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-4">
+    <nav>
+        <ul class="pagination">
+            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                <li class="page-item <?= $i === $page ? 'active' : '' ?>">
+                    <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
+                </li>
+            <?php endfor; ?>
+        </ul>
+    </nav>
+    <p class="text-muted">Page <?= $page ?> of <?= $totalPages ?></p>
 </div>
 
 <!-- Add Modal -->

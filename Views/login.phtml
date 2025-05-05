@@ -5,7 +5,15 @@
             <h1 class="h3 mb-3 fw-normal">Sign In</h1>
         </div>
 
+        <?php if (!empty($error)): ?>
+            <div class="alert alert-danger" role="alert">
+                <?= htmlspecialchars($error) ?>
+            </div>
+        <?php endif; ?>
+
         <form action="../login.php" method="POST">
+            <!-- bullshit input hidden instead of captcha -->
+            <input type="hidden">
             <!-- Username Field -->
             <div class="form-floating mb-3">
                 <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>

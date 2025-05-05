@@ -6,7 +6,16 @@ require_once 'Models/User.php';
 $chargePointModel = new ChargePoint($db);
 $usersModel = new User($db);
 $allUsers = $usersModel->getAllUsers();
+$limit = 10; // Records per page
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $limit;
 
+// Fetch paginated charge points
+$chargePoints = $chargePointModel->getPaginated($limit, $offset);
+
+// Calculate total pages
+$totalCount = $chargePointModel->getTotalCount();
+$totalPages = ceil($totalCount / $limit);
 if ($_SESSION['role'] === 'homeowner') {
     $chargePoint = $chargePointModel->getByHomeOwnerById($_SESSION['user_id']);
 }
@@ -83,6 +92,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         switch ($_POST['action']) {
             case 'create':
+                $existingChargePoint = $chargePointModel->getByHomeOwnerById($_POST['homeowner_id']);
+                if ($existingChargePoint) {
+                    header("Location: chargePoint.php?error=homeowner_already_has_charge_point");
+                    exit;
+                }
+
                 $chargePointModel->create([
                     'homeowner_id' => $_POST['homeowner_id'],
                     'address' => $_POST['address'],
@@ -117,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$chargePoints = $chargePointModel->getAll();
+// $chargePoints = $chargePointModel->getAll();
 
 function uploadImage($file)
 {

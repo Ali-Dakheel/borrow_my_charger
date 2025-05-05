@@ -127,7 +127,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="bookingForm" method="post" action="/booking.php">
-                <input type="hidden" name="action" value="create">
+                <input type="hidden" name="action" value="create_booking">
                 <input type="hidden" name="user_id" value="<?= $_SESSION['user_id'] ?>">
                 <input type="hidden" name="charge_point_id" id="modalChargePointId">
                 <input type="hidden" name="status" value="pending">
