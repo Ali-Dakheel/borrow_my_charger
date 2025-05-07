@@ -1,0 +1,53 @@
+<?php require(__DIR__.'/../partials/header.phtml') ?>
+<?php require(__DIR__.'/../partials/navbar.phtml') ?>
+
+<div class="container mt-5">
+    <h2 class="mb-4">Pending Homeowner Approvals</h2>
+
+    <!-- Flash Messages -->
+    <?php if (!empty($_SESSION['success'])): ?>
+        <div class="alert alert-success">
+            <?= htmlspecialchars($_SESSION['success']) ?>
+        </div>
+        <?php unset($_SESSION['success']); ?>
+    <?php endif; ?>
+
+    <?php if (!empty($_SESSION['error'])): ?>
+        <div class="alert alert-danger">
+            <?= htmlspecialchars($_SESSION['error']) ?>
+        </div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+
+    <?php if (!empty($pendingHomeowners)): ?>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($pendingHomeowners as $homeowner): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($homeowner['id']) ?></td>
+                        <td><?= htmlspecialchars($homeowner['username']) ?></td>
+                        <td><?= htmlspecialchars($homeowner['email']) ?></td>
+                        <td>
+                            <form method="POST" action="">
+                                <input type="hidden" name="approve_id" value="<?= htmlspecialchars($homeowner['id']) ?>">
+                                <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                            </form>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php else: ?>
+        <p class="text-muted">No pending homeowners for approval.</p>
+    <?php endif; ?>
+</div>
+
+<?php require(__DIR__.'/../partials/footer.phtml') ?>

@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = trim($_POST['password']);
 
         $user = $db->query(
-            "SELECT id, username, password, role, status FROM users WHERE username = ?",
+            "SELECT id, username, password, role, status, is_approved FROM users WHERE username = ?",
             [$username]
         )->find();
 
@@ -15,6 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Check if account is suspended
             if ($user['status'] == 'suspended') {
                 $error = 'Your account has been suspended. Please contact support.';
+            } else if ($user['role'] == 'homeowner' && $user['is_approved'] == 0) {
+                $error = 'Your account is not yet approved. Please wait for approval.';
             } else if (password_verify($password, $user['password'])) {
                 // Successful login
                 $_SESSION['user_id']   = $user['id'];

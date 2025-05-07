@@ -26,6 +26,12 @@
                         User Management
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center gap-2" href="/approveHomeowner.php">
+                        <svg class="bi" width="16" height="16"><use xlink:href="#people-fill"/></svg>
+                        Approve homeowner registrations
+                    </a>
+                </li>
                 <?php endif; ?>
                 <!-- Homeowner Specific Items -->
                 <?php if ($_SESSION['role'] === 'homeowner'): ?>
@@ -56,6 +62,12 @@
                         My Bookings
                     </a>
                 </li>
+                <!-- <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center gap-2" href="/contactHomeowner.php">
+                        <svg class="bi" width="16" height="16"><use xlink:href="#journal-bookmark"/></svg>
+                        Contact Homeowner
+                    </a>
+                </li> -->
                 <?php endif; ?>
                 <!-- Shared Items -->
                 <li class="nav-item">

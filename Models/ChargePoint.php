@@ -96,7 +96,7 @@ class ChargePoint
         // force integers
         $limit  = max(1, $limit);
         $offset = max(0, $offset);
-    
+
         // inline them—no placeholders—so MySQL sees: LIMIT 10 OFFSET 0
         $sql = "
           SELECT cp.*, u.username AS homeowner_username
@@ -105,16 +105,28 @@ class ChargePoint
           ORDER BY cp.id DESC
           LIMIT {$limit} OFFSET {$offset}
         ";
-    
+
         return $this->db
-                    ->query($sql)
-                    ->findAll();
+            ->query($sql)
+            ->findAll();
     }
-    
+
     public function getTotalCount()
     {
         return $this->db->query(
             "SELECT COUNT(*) as total FROM charge_points"
         )->find()['total'];
+    }
+
+    public function getAllHomeownersWithChargePoints()
+    {
+        return $this->db->query(
+            "SELECT u.id as homeowner_id, u.name as homeowner_name, u.username as homeowner_username, 
+                    cp.address as charge_point_address, cp.postcode as charge_point_postcode
+             FROM users u
+             JOIN charge_points cp ON u.id = cp.homeowner_id
+             WHERE u.role = ?",
+            ['homeowner']
+        )->findAll();
     }
 }

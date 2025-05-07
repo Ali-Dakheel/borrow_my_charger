@@ -1,0 +1,43 @@
+<?php require __DIR__ . '/../partials/header.phtml'; ?>
+<?php require __DIR__ . '/../partials/navbar.phtml'; ?>
+
+<div class="container">
+    <h1>Contact Homeowner</h1>
+
+    <!-- Display success message -->
+    <?php if (!empty($successMessage)): ?>
+        <div class="alert alert-success">
+            <?= htmlspecialchars($successMessage) ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- Display error message -->
+    <?php if (!empty($errorMessage)): ?>
+        <div class="alert alert-danger">
+            <?= htmlspecialchars($errorMessage) ?>
+        </div>
+    <?php endif; ?>
+
+    <form action="/contactHomeowner.php" method="POST">
+        <div class="form-group">
+            <label for="homeowner">Select Homeowner:</label>
+            <select name="recipient_id" id="homeowner" class="form-control" required>
+                <option value="">-- Select Homeowner --</option>
+                <?php foreach ($homeowners as $homeowner): ?>
+                    <option value="<?= htmlspecialchars($homeowner['homeowner_id']) ?>">
+                        <?= htmlspecialchars($homeowner['homeowner_name']) ?> - <?= htmlspecialchars($homeowner['charge_point_address']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="message">Message:</label>
+            <textarea name="message" id="message" class="form-control" rows="5" required></textarea>
+        </div>
+        <input type="hidden" name="sender_id" value="<?= $_SESSION['user_id'] ?? '' ?>">
+        <input type="hidden" name="booking_id" value="<?= $_GET['booking_id'] ?? '' ?>">
+        <button type="submit" class="btn btn-primary">Send Message</button>
+    </form>
+</div>
+
+<?php require __DIR__ . '/../partials/footer.phtml'; ?>

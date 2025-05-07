@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($password !== $confirmPassword) {
             $message = 'Passwords do not match!';
         } else {
-            // Hash the password
+            // Hash the password    
             $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
             // Prepare the SQL query and execute it with PDO parameters

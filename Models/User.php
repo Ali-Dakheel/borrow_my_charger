@@ -50,4 +50,16 @@ class User {
             ["%$query%", "%$query%", "%$query%"]
         )->findAll();
     }
+    public function approveHomeowner($id) {
+        return $this->db->query(
+            'UPDATE users SET is_approved = ? WHERE id = ?',
+            [1, $id]
+        );
+    }
+    public function getAllPendingHomeowners() {
+        return $this->db->query(
+            'SELECT * FROM users WHERE is_approved = ? and role = ?',
+            [0, 'homeowner']
+        )->findAll();
+    }
 }
