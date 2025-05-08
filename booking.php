@@ -7,6 +7,15 @@ require_once 'Models/Booking.php';
 require_once 'Models/ChargePoint.php';
 require_once 'Models/Review.php';
 
+
+if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
+    header('Content-Type: application/json');
+    $model = new Booking($db);
+    $bookings = $model->getByRentalUserIdWithDetails($_SESSION['user_id']);
+    echo json_encode($bookings);
+    exit;
+}
+
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
