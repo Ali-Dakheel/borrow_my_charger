@@ -177,61 +177,64 @@
 
         <!-- Review Card -->
         <div class="col-12">
-    <div class="card shadow-sm">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Your Review</h5>
-        </div>
-        <div class="card-body">
-            <?php if (!empty($review)): ?>
-                <!-- Existing Review -->
-                <div class="mb-4">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="me-2">
-                            <?php for ($i = 1; $i <= 5; $i++): ?>
-                                <i class="bi bi-star<?= ($i <= $review['rating']) ? '-fill text-warning' : '' ?>"></i>
-                            <?php endfor; ?>
-                        </div>
-                        <span class="text-muted small">
-                            Submitted on <?= date('M j, Y', strtotime($review['created_at'])) ?>
-                        </span>
-                    </div>
-                    <p class="mb-0"><?= htmlspecialchars($review['comment']) ?></p>
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Your Review</h5>
                 </div>
-                <div class="d-flex justify-content-end">
-                    <?php if ($canReview): ?>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editReviewModal">
-                        <i class="bi bi-pencil"></i> Edit Review
-                    </button>
+                <div class="card-body">
+                    <?php if ($review): ?>
+                        <!-- Existing Review -->
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2">
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <i class="bi bi-star<?= ($i <= $review->getRating()) ? '-fill text-warning' : '' ?>"></i>
+                                    <?php endfor; ?>
+                                </div>
+                                <span class="text-muted small">
+                                    Submitted on <?= date('M j, Y', strtotime($review->getCreatedAt())) ?>
+                                </span>
+                            </div>
+                            <p class="mb-0"><?= htmlspecialchars($review->getComment()) ?></p>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <?php if ($canReview): ?>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editReviewModal">
+                                <i class="bi bi-pencil"></i> Edit Review
+                            </button>
+                            <?php endif; ?>
+                        </div>
+                    <?php else: ?>
+                        <!-- No Review Yet -->
+                        <?php if ($canReview): ?>
+                            <div class="text-center py-4">
+                                <i class="bi bi-chat-left-text fs-1 text-muted"></i>
+                                <h5 class="mt-3 text-muted">You haven't submitted a review yet</h5>
+                                <p class="text-muted">Share your experience with this charge point.</p>
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addReviewModal">
+                                    <i class="bi bi-chat-left-text"></i> Write a Review
+                                </button>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-center py-4">
+                                <i class="bi bi-lock fs-1 text-muted"></i>
+                                <h5 class="mt-3 text-muted">You can't review this booking yet</h5>
+                                <p class="text-muted">
+                                    <?php if ($booking['status'] === 'pending'): ?>
+                                        This booking needs to be approved, declined, or cancelled before you can leave a review.
+                                    <?php else: ?>
+                                        You'll be able to review this booking once it ends on <?= date('F j, Y \a\t g:i A', strtotime($booking['end_time'])) ?>.
+                                    <?php endif; ?>
+                                </p>
+                            </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
-            <?php else: ?>
-                <!-- No Review Yet -->
-                <?php if ($canReview): ?>
-                    <div class="text-center py-4">
-                        <i class="bi bi-chat-left-text fs-1 text-muted"></i>
-                        <h5 class="mt-3 text-muted">You haven't submitted a review yet</h5>
-                        <p class="text-muted">Share your experience with this charge point.</p>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addReviewModal">
-                            <i class="bi bi-chat-left-text"></i> Write a Review
-                        </button>
-                    </div>
-                <?php else: ?>
-                    <div class="text-center py-4">
-                        <i class="bi bi-lock fs-1 text-muted"></i>
-                        <h5 class="mt-3 text-muted">You can't review this booking yet</h5>
-                        <p class="text-muted">
-                            <?php if ($booking['status'] === 'pending'): ?>
-                                This booking needs to be approved, declined, or cancelled before you can leave a review.
-                            <?php else: ?>
-                                You'll be able to review this booking once it ends on <?= date('F j, Y \a\t g:i A', strtotime($booking['end_time'])) ?>.
-                            <?php endif; ?>
-                        </p>
-                    </div>
-                <?php endif; ?>
-            <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>
+
 <!-- Contact Modal -->
 <div class="modal fade" id="contactModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -304,7 +307,7 @@
 </div>
 
 <!-- Edit Review Modal -->
-<?php if (!empty($review)): ?>
+<?php if ($review): ?>
 <div class="modal fade" id="editReviewModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -323,7 +326,7 @@
                             <?php for ($i = 5; $i >= 1; $i--): ?>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="radio" name="rating" id="editRating<?= $i ?>" 
-                                       value="<?= $i ?>" <?= ($review['rating'] == $i) ? 'checked' : '' ?> required>
+                                       value="<?= $i ?>" <?= ($review->getRating() == $i) ? 'checked' : '' ?> required>
                                 <label class="form-check-label" for="editRating<?= $i ?>">
                                     <?= $i ?> stars
                                 </label>
@@ -335,7 +338,7 @@
                     <div class="mb-3">
                         <label for="editReviewComment" class="form-label">Your Review</label>
                         <textarea name="comment" id="editReviewComment" rows="4" class="form-control" 
-                                  required><?= htmlspecialchars($review['comment']) ?></textarea>
+                                  required><?= htmlspecialchars($review->getComment()) ?></textarea>
                     </div>
                     
                     <div class="d-grid">

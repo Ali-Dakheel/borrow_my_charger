@@ -69,6 +69,7 @@
                                     </td>
                                     <td><?= date('M j, Y', strtotime($user['created_at'])) ?></td>
                                     <td class="text-end">
+                                        <?php if ($user['role'] !== 'admin'): ?>
                                         <div class="d-flex justify-content-end gap-2">
                                             <!-- Status Dropdown -->
                                             <div class="dropdown">
@@ -133,6 +134,9 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <?php else: ?>
+                                        <span class="text-muted small">No actions available</span>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

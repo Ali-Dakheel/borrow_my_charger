@@ -2,7 +2,8 @@
 require_once __DIR__ . '/Core/bootstrap.php';
 require_once 'Models/Booking.php';
 require_once 'Models/ChargePoint.php';
-require_once 'Models/Review.php';
+require_once 'Models/ReviewData.php';
+require_once 'Models/ReviewDataset.php';
 require_once 'Models/ContactMessages.php';
 
 // Handle POST requests for submitting reviews or sending messages
@@ -23,25 +24,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 // Get current date and time
-                $currentTime = new DateTime('2025-05-15 05:01:03'); // Use the provided current time
+                $currentTime = new DateTime(); // Use the provided current time
                 $bookingEndTime = new DateTime($booking['end_time']);
                 
                 if ($bookingEndTime > $currentTime) {
                     throw new Exception("You can only review bookings that have ended");
                 }
                 
-                $reviewModel = new Review($db);
-                $existing = $reviewModel->getByBookingId($_POST['booking_id']);
-                $data = [
-                    'booking_id' => $_POST['booking_id'],
-                    'rating'     => $_POST['rating'],
-                    'comment'    => $_POST['comment'],
-                ];
+                $reviewsDataset = new ReviewsDataset($db);
+                $existing = $reviewsDataset->getByBookingId($_POST['booking_id']);
+                
                 if ($existing) {
-                    $reviewModel->update($existing['review_id'], $data);
+                    $reviewsDataset->update($existing->getReviewId(), $_POST['rating'], $_POST['comment']);
                     $_SESSION['success'] = 'Review updated successfully!';
                 } else {
-                    $reviewModel->create($data);
+                    $reviewsDataset->create($_POST['booking_id'], $_POST['rating'], $_POST['comment']);
                     $_SESSION['success'] = 'Review submitted successfully!';
                 }
                 break;
@@ -109,8 +106,8 @@ if (!$booking) {
 }
 
 // Get review if exists
-$reviewModel = new Review($db);
-$review = $reviewModel->getByBookingId($bookingId);
+$reviewsDataset = new ReviewsDataset($db);
+$review = $reviewsDataset->getByBookingId($bookingId);
 
 // Get messages for this booking
 $messageModel = new ContactMessage($db);

@@ -49,10 +49,6 @@
                         <span class="text-white text-decoration-none">
                             <i class="bi bi-info-circle me-1"></i> Manage your charge point settings
                         </span>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="availabilityToggle" <?= $chargePoint['is_available'] ? 'checked' : '' ?>>
-                            <label class="form-check-label" for="availabilityToggle">Available</label>
-                        </div>
                     <?php else: ?>
                         <span class="text-white text-decoration-none">
                             <i class="bi bi-info-circle me-1"></i> Set up your charge point
@@ -244,17 +240,5 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Simple toggle for availability (no AJAX call)
-    const availabilityToggle = document.getElementById('availabilityToggle');
-    if (availabilityToggle) {
-        availabilityToggle.addEventListener('change', function() {
-            const isAvailable = this.checked;
-            alert(isAvailable ? 'Your charge point is now set to available!' : 'Your charge point is now set to unavailable!');
-        });
-    }
-});
-</script>
 
 <?php require(__DIR__.'/../partials/footer.phtml') ?>
