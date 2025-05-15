@@ -1,25 +1,92 @@
 <?php require(__DIR__.'/../partials/header.phtml') ?>
 <?php require(__DIR__.'/../partials/navbar.phtml') ?>
 
+<!-- Include Leaflet CSS -->
+<link rel="stylesheet" href="/lib/leaflet.css">
+
 <div class="container-fluid mt-4">
     <h2>My Charge Point</h2>
+    
+    <?php 
+    // Check if homeowner is approved
+    $userModel = new User($db);
+    $isApproved = $userModel->isHomeownerApproved($_SESSION['user_id']); 
+    ?>
+    
+    <?php if (!$isApproved): ?>
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Your account is pending approval.</strong> Your charge point will remain unavailable until an administrator approves your account.
+        </div>
+    <?php endif; ?>
+    
     <?php if (!$chargePoint): ?>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
-            <i class="bi bi-plus-circle"></i> Add Charge Point
-        </button>
-    <?php else: ?>
-        <div class="card mb-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Create Your Charge Point</h5>
+            </div>
             <div class="card-body">
-                <h5 class="card-title"><?= htmlspecialchars($chargePoint['address']) ?></h5>
-                <p class="card-text">
-                    <strong>Postcode:</strong> <?= htmlspecialchars($chargePoint['postcode']) ?><br>
-                    <strong>Price:</strong> £<?= htmlspecialchars($chargePoint['price_per_kwh']) ?>/kWh<br>
-                    <strong>Status:</strong>
-                    <span class="badge bg-<?= $chargePoint['is_available'] ? 'success' : 'danger' ?>">
-                        <?= $chargePoint['is_available'] ? 'Available' : 'Unavailable' ?>
-                    </span>
-                </p>
-                <button class="btn btn-warning"
+                <form method="POST" enctype="multipart/form-data" action="<?= $_SERVER['PHP_SELF'] ?>">
+                    <input type="hidden" name="action" value="create">
+                    <input type="hidden" name="homeowner_id" value="<?= $_SESSION['user_id'] ?>">
+                    <!-- Setting is_available to false by default -->
+                    <input type="hidden" name="is_available" value="0">
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Address</label>
+                            <input type="text" class="form-control" name="address" id="address" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Postcode</label>
+                            <input type="text" class="form-control" name="postcode" id="postcode" required>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Select Location on Map</label>
+                            <div id="create-map" class="rounded border mb-2" style="height: 400px;"></div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Latitude</label>
+                            <input type="text" class="form-control" name="latitude" id="latitude" readonly required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Longitude</label>
+                            <input type="text" class="form-control" name="longitude" id="longitude" readonly required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Price per kWh (£)</label>
+                            <input type="number" step="0.01" min="0" class="form-control" name="price_per_kwh" required>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Charge Point Image</label>
+                            <input type="file" class="form-control" name="image" accept="image/*">
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-text text-muted mb-3">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Your charge point will be unavailable for booking until your account is approved by an administrator.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i> Create Charge Point
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    <?php else: ?>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Your Charge Point</h5>
+                <button class="btn btn-warning btn-sm"
                     data-bs-toggle="modal"
                     data-bs-target="#editModal"
                     data-id="<?= htmlspecialchars($chargePoint['id']) ?>"
@@ -34,77 +101,55 @@
                     <i class="bi bi-pencil"></i> Edit
                 </button>
             </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Address:</strong> <?= htmlspecialchars($chargePoint['address']) ?>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Postcode:</strong> <?= htmlspecialchars($chargePoint['postcode']) ?>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Price:</strong> £<?= htmlspecialchars($chargePoint['price_per_kwh']) ?>/kWh
+                        </div>
+                        <div class="mb-3">
+                            <strong>Status:</strong>
+                            <span class="badge bg-<?= $chargePoint['is_available'] ? 'success' : 'danger' ?>">
+                                <?= $chargePoint['is_available'] ? 'Available' : 'Unavailable' ?>
+                            </span>
+                            <?php if (!$isApproved && $chargePoint['is_available']): ?>
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    Your charge point will remain unavailable until your account is approved.
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <?php if (!$isApproved): ?>
+                            <div class="alert alert-info mt-4">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Your account is awaiting approval. Once approved, you'll be able to make your charge point available for booking.
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="view-map" class="rounded border" style="height: 300px;"></div>
+                    </div>
+                </div>
+                
+                <?php if ($chargePoint['image_path']): ?>
+                <div class="mt-3">
+                    <strong>Charge Point Image:</strong>
+                    <div class="mt-2">
+                        <img src="<?= htmlspecialchars($chargePoint['image_path']) ?>" alt="Charge Point" class="img-thumbnail" style="max-width: 300px;">
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
         </div>
     <?php endif; ?>
 </div>
-
-<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form method="POST" enctype="multipart/form-data" action="<?= $_SERVER['PHP_SELF'] ?>">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addModalLabel">Add New Charge Point</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" name="action" value="create">
-                    <?php if ($_SESSION['role'] === 'homeowner'): ?>
-                        <input type="hidden" name="homeowner_id" value="<?= $_SESSION['user_id'] ?? '' ?>">
-                    <?php endif ?>
-                    <?php if ($_SESSION['role'] === 'admin'): ?>
-                        <label for="homeowner_id" class="form-label">Choose user</label>
-                        <select class="form-select" id="homeowner_id" name="homeowner_id" required>
-                            <?php foreach ($allUsers as $user): ?>
-                                <option value=<?= htmlspecialchars($user['id']) ?>>
-                                    <?= $user['name'] ?>
-                                </option>
-                            <?php endforeach ?>
-                        </select>
-                    <?php endif ?>
-
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Address</label>
-                            <input type="text" class="form-control" name="address" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Postcode</label>
-                            <input type="text" class="form-control" name="postcode" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Latitude</label>
-                            <input type="number" step="0.00000001" class="form-control" name="latitude" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Longitude</label>
-                            <input type="number" step="0.00000001" class="form-control" name="longitude" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Price per kWh (£)</label>
-                            <input type="number" step="0.01" class="form-control" name="price_per_kwh" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Availability</label>
-                            <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" name="is_available" checked>
-                                <label class="form-check-label">Available</label>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Charge Point Image</label>
-                            <input type="file" class="form-control" name="image" accept="image/*">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -118,10 +163,8 @@
                     <input type="hidden" name="action" value="update">
                     <input type="hidden" name="id" id="editId">
                     <input type="hidden" name="existing_image" id="editExistingImage">
-                    <!-- Hidden homeowner id for homeowners -->
                     <input type="hidden" name="homeowner_id" id="editHomeownerId">
                     
-                    <!-- Other fields -->
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Address</label>
@@ -131,25 +174,39 @@
                             <label class="form-label">Postcode</label>
                             <input type="text" class="form-control" name="postcode" id="editPostcode" required>
                         </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Edit Location on Map</label>
+                            <div id="edit-map" class="rounded border mb-2" style="height: 300px;"></div>
+                        </div>
+                        
                         <div class="col-md-6">
                             <label class="form-label">Latitude</label>
-                            <input type="number" step="0.00000001" class="form-control" name="latitude" id="editLat" required>
+                            <input type="text" class="form-control" name="latitude" id="editLat" readonly required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Longitude</label>
-                            <input type="number" step="0.00000001" class="form-control" name="longitude" id="editLng" required>
+                            <input type="text" class="form-control" name="longitude" id="editLng" readonly required>
                         </div>
+                        
                         <div class="col-md-6">
                             <label class="form-label">Price per kWh (£)</label>
-                            <input type="number" step="0.01" class="form-control" name="price_per_kwh" id="editPrice" required>
+                            <input type="number" step="0.01" min="0" class="form-control" name="price_per_kwh" id="editPrice" required>
                         </div>
+                        
                         <div class="col-md-6">
                             <label class="form-label">Availability</label>
                             <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" name="is_available" id="editAvailable">
+                                <input class="form-check-input" type="checkbox" name="is_available" id="editAvailable" <?= !$isApproved ? 'disabled' : '' ?>>
                                 <label class="form-check-label">Available</label>
+                                <?php if (!$isApproved): ?>
+                                <div class="form-text text-danger">
+                                    Unavailable until your account is approved.
+                                </div>
+                                <?php endif; ?>
                             </div>
                         </div>
+                        
                         <div class="col-12">
                             <label class="form-label">Charge Point Image</label>
                             <input type="file" class="form-control" name="image" accept="image/*">
@@ -166,9 +223,111 @@
     </div>
 </div>
 
+<!-- Include Leaflet JS -->
+<script src="/lib/leaflet.js"></script>
+<script src="/lib/control.GeoCoder.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize maps
+    const isApproved = <?= $isApproved ? 'true' : 'false' ?>;
+    
+    // Map for creating new charge point
+    const createMap = document.getElementById('create-map');
+    if (createMap) {
+        const map = L.map('create-map').setView([51.505, -0.09], 13);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Initialize marker with null value
+        let marker;
+        
+        // Function to update marker position
+        function updateMarker(lat, lng) {
+            // Update form fields
+            document.getElementById('latitude').value = lat.toFixed(8);
+            document.getElementById('longitude').value = lng.toFixed(8);
+            
+            // Update or create marker
+            if (marker) {
+                marker.setLatLng([lat, lng]);
+            } else {
+                marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                marker.on('dragend', function(e) {
+                    const position = marker.getLatLng();
+                    updateMarker(position.lat, position.lng);
+                });
+            }
+        }
+        
+        // Handle map clicks to place/move marker
+        map.on('click', function(e) {
+            updateMarker(e.latlng.lat, e.latlng.lng);
+        });
+        
+        // Try to use address/postcode to center map when they change
+        function searchAddress() {
+            const address = document.getElementById('address').value;
+            const postcode = document.getElementById('postcode').value;
+            
+            if (!address && !postcode) return;
+            
+            const searchTerm = address + ' ' + postcode;
+            
+            // If GeoCoder is available
+            if (typeof L.Control.Geocoder !== 'undefined') {
+                const geocoder = L.Control.Geocoder.nominatim();
+                geocoder.geocode(searchTerm, function(results) {
+                    if (results && results.length > 0) {
+                        const result = results[0];
+                        map.setView([result.center.lat, result.center.lng], 16);
+                        updateMarker(result.center.lat, result.center.lng);
+                    }
+                });
+            }
+        }
+        
+        document.getElementById('address').addEventListener('blur', searchAddress);
+        document.getElementById('postcode').addEventListener('blur', searchAddress);
+        
+        // Make sure map renders correctly
+        setTimeout(function() {
+            map.invalidateSize();
+        }, 100);
+    }
+    
+    // Map for viewing existing charge point
+    const viewMap = document.getElementById('view-map');
+    if (viewMap) {
+        <?php if ($chargePoint): ?>
+        const lat = <?= $chargePoint['latitude'] ?>;
+        const lng = <?= $chargePoint['longitude'] ?>;
+        const address = "<?= addslashes(htmlspecialchars($chargePoint['address'])) ?>";
+        
+        const map = L.map('view-map').setView([lat, lng], 15);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        const marker = L.marker([lat, lng]).addTo(map);
+        marker.bindPopup(`<b>${address}</b><br>Your Charge Point`).openPopup();
+        
+        // Make sure map renders correctly
+        setTimeout(function() {
+            map.invalidateSize();
+        }, 100);
+        <?php endif; ?>
+    }
+    
+    // Edit modal map
+    let editMap = null;
+    let editMarker = null;
+    
     // Edit Modal Handler
     const editModal = document.getElementById('editModal');
     if (editModal) {
@@ -183,14 +342,23 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('editLng').value = button.dataset.lng;
             document.getElementById('editPrice').value = button.dataset.price;
             document.getElementById('editExistingImage').value = button.dataset.image;
-            document.getElementById('editAvailable').checked = (button.dataset.available === '1' || button.dataset.available === 'true');
+            
+            // Set availability checkbox and handle approval status
+            const availableCheckbox = document.getElementById('editAvailable');
+            availableCheckbox.checked = (button.dataset.available === '1' || button.dataset.available === 'true');
+            
+            if (!isApproved) {
+                availableCheckbox.checked = false;
+                // Add a hidden input to ensure 'is_available' is sent as 0
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'is_available';
+                hiddenInput.value = '0';
+                availableCheckbox.parentNode.appendChild(hiddenInput);
+            }
 
             // Set the homeowner value
-            const homeownerSelect = document.getElementById('editHomeownerId');
-            if (homeownerSelect) {
-                // For both hidden input and select, setting the value is the same:
-                homeownerSelect.value = button.dataset.homeowner;
-            }
+            document.getElementById('editHomeownerId').value = button.dataset.homeowner;
 
             // Handle image display
             const imageContainer = document.getElementById('currentImage');
@@ -202,15 +370,53 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 imageContainer.innerHTML = '<p>No current image</p>';
             }
+            
+            // Initialize edit map
+            setTimeout(() => {
+                const lat = parseFloat(button.dataset.lat);
+                const lng = parseFloat(button.dataset.lng);
+                const mapContainer = document.getElementById('edit-map');
+                
+                if (mapContainer && !editMap) {
+                    editMap = L.map('edit-map').setView([lat, lng], 15);
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(editMap);
+                    
+                    editMarker = L.marker([lat, lng], { draggable: true }).addTo(editMap);
+                    
+                    // Update coordinates when marker is dragged
+                    editMarker.on('dragend', function() {
+                        const pos = editMarker.getLatLng();
+                        document.getElementById('editLat').value = pos.lat.toFixed(8);
+                        document.getElementById('editLng').value = pos.lng.toFixed(8);
+                    });
+                    
+                    // Update marker position when map is clicked
+                    editMap.on('click', function(e) {
+                        editMarker.setLatLng(e.latlng);
+                        document.getElementById('editLat').value = e.latlng.lat.toFixed(8);
+                        document.getElementById('editLng').value = e.latlng.lng.toFixed(8);
+                    });
+                } else if (editMap) {
+                    // If map already exists, update view and marker position
+                    editMap.setView([lat, lng], 15);
+                    editMarker.setLatLng([lat, lng]);
+                }
+                
+                // Make sure map renders correctly after modal is shown
+                editMap.invalidateSize();
+            }, 300);
         });
-    }
-
-    // Delete Modal Handler
-    const deleteModal = document.getElementById('deleteModal');
-    if (deleteModal) {
-        deleteModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            document.getElementById('deleteId').value = button.dataset.id;
+        
+        // Clean up map when modal is hidden
+        editModal.addEventListener('hidden.bs.modal', function() {
+            if (editMap) {
+                // Don't destroy the map, just make sure it's ready for next time
+                editMap.invalidateSize();
+            }
         });
     }
 });

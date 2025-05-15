@@ -126,4 +126,9 @@ class User
         $query = 'UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = ?';
         return $this->db->query($query, $values);
     }
+    public function isHomeownerApproved($id)
+    {
+        $user = $this->getUserById($id);
+        return $user && $user['role'] === 'homeowner' && $user['is_approved'] == 1;
+    }
 }
