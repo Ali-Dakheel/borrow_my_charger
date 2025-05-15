@@ -77,15 +77,15 @@ class Booking{
                     cp.postcode AS charge_point_postcode,
                     cp.latitude, cp.longitude,
                     cp.price_per_kwh,
-                    u.name AS homeowner_name
+                    u.name AS homeowner_name,
+                    u.id AS homeowner_id
              FROM bookings b
              JOIN charge_points cp ON b.charge_point_id = cp.id
              JOIN users u ON cp.homeowner_id = u.id
              WHERE b.id = ? AND b.user_id = ?',
             [$bookingId, $userId]
         )->find();
-    }
-    
+    }    
     public function getBookingWithDetailsByIdForHomeowner($bookingId, $homeownerId) {
         return $this->db->query(
             'SELECT b.*, 

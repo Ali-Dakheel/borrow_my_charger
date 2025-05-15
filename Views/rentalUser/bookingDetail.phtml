@@ -32,7 +32,7 @@
     <div class="row g-4">
         <!-- Booking Details Card -->
         <div class="col-md-8">
-            <div class="card shadow-sm h-100">
+            <div class="card shadow-sm">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">Booking Information</h5>
                 </div>
@@ -95,21 +95,27 @@
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <?php if ($booking['status'] === 'pending' || $booking['status'] === 'cancelled'): ?>
-                            <form action="booking.php" method="post">
-                                <input type="hidden" name="action" value="cancel_booking">
-                                <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
-                                <input type="hidden" name="current_status" value="<?= $booking['status'] ?>">
-                                <button type="submit" class="btn <?= $booking['status'] === 'cancelled' ? 'btn-success' : 'btn-outline-danger' ?>">
-                                    <i class="bi <?= $booking['status'] === 'cancelled' ? 'bi-arrow-counterclockwise' : 'bi-x-circle' ?>"></i>
-                                    <?= $booking['status'] === 'cancelled' ? 'Restore Booking' : 'Cancel Booking' ?>
-                                </button>
-                            </form>
-                        <?php endif; ?>
-                        <a href="booking.php" class="btn btn-secondary">
-                            <i class="bi bi-arrow-left"></i> Back to Bookings
-                        </a>
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#contactModal">
+                            <i class="bi bi-chat-dots"></i> Contact Homeowner
+                        </button>
+                        
+                        <div class="d-flex gap-2">
+                            <?php if ($booking['status'] === 'pending' || $booking['status'] === 'cancelled'): ?>
+                                <form action="booking.php" method="post">
+                                    <input type="hidden" name="action" value="cancel_booking">
+                                    <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                                    <input type="hidden" name="current_status" value="<?= $booking['status'] ?>">
+                                    <button type="submit" class="btn <?= $booking['status'] === 'cancelled' ? 'btn-success' : 'btn-outline-danger' ?>">
+                                        <i class="bi <?= $booking['status'] === 'cancelled' ? 'bi-arrow-counterclockwise' : 'bi-x-circle' ?>"></i>
+                                        <?= $booking['status'] === 'cancelled' ? 'Restore Booking' : 'Cancel Booking' ?>
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                            <a href="booking.php" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Bookings
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -123,13 +129,47 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <p class="fw-bold mb-1"><?= htmlspecialchars($booking['charge_point_address']) ?></p>
+                        <p class="fw-bold mb-1" id="charge-point-address"><?= htmlspecialchars($booking['charge_point_address']) ?></p>
                         <p class="mb-0"><?= htmlspecialchars($booking['charge_point_postcode']) ?></p>
                     </div>
-                    <!-- Placeholder for a map - you can integrate Google Maps or similar here -->
-                    <div class="bg-light rounded text-center p-4 mb-3" style="height: 200px;">
-                        <i class="bi bi-geo-alt text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-2">Location map would appear here</p>
+                    <!-- Leaflet Map -->
+                    <input type="hidden" id="booking-latitude" value="<?= $booking['latitude'] ?>">
+                    <input type="hidden" id="booking-longitude" value="<?= $booking['longitude'] ?>">
+                    <div id="map-container" class="rounded mb-3" style="height: 250px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages Card -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Communication with Homeowner</h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#contactModal">
+                        <i class="bi bi-chat-dots"></i> New Message
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="overflow-auto" style="max-height: 300px;">
+                        <?php if (empty($messages)): ?>
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-chat-left fs-1"></i>
+                                <p class="mt-3">No messages yet</p>
+                                <p class="small">Start the conversation with the homeowner</p>
+                            </div>
+                        <?php else: ?>
+                            <?php foreach ($messages as $message): ?>
+                                <div class="d-flex flex-column <?= $message['sender_id'] == $_SESSION['user_id'] ? 'align-items-end' : 'align-items-start' ?> mb-3">
+                                    <div class="p-3 rounded-3 <?= $message['sender_id'] == $_SESSION['user_id'] ? 'bg-primary bg-opacity-10 text-end' : 'bg-light' ?>" style="max-width: 75%;">
+                                        <div class="mb-1"><?= nl2br(htmlspecialchars($message['message'])) ?></div>
+                                        <div class="small text-muted">
+                                            <?= $message['sender_id'] == $_SESSION['user_id'] ? 'You' : htmlspecialchars($message['sender_name']) ?>
+                                            - <?= date('M j, g:i A', strtotime($message['sent_at'])) ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -137,51 +177,85 @@
 
         <!-- Review Card -->
         <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Your Review</h5>
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Your Review</h5>
+        </div>
+        <div class="card-body">
+            <?php if (!empty($review)): ?>
+                <!-- Existing Review -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="me-2">
+                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <i class="bi bi-star<?= ($i <= $review['rating']) ? '-fill text-warning' : '' ?>"></i>
+                            <?php endfor; ?>
+                        </div>
+                        <span class="text-muted small">
+                            Submitted on <?= date('M j, Y', strtotime($review['created_at'])) ?>
+                        </span>
+                    </div>
+                    <p class="mb-0"><?= htmlspecialchars($review['comment']) ?></p>
                 </div>
-                <div class="card-body">
-                    <?php if (!empty($review)): ?>
-                        <!-- Existing Review -->
-                        <div class="mb-4">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="me-2">
-                                    <?php for ($i = 1; $i <= 5; $i++): ?>
-                                        <i class="bi bi-star<?= ($i <= $review['rating']) ? '-fill text-warning' : '' ?>"></i>
-                                    <?php endfor; ?>
-                                </div>
-                                <span class="text-muted small">
-                                    Submitted on <?= date('M j, Y', strtotime($review['created_at'])) ?>
-                                </span>
-                            </div>
-                            <p class="mb-0"><?= htmlspecialchars($review['comment']) ?></p>
-                        </div>
-                        <div class="d-flex justify-content-end">
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editReviewModal">
-                                <i class="bi bi-pencil"></i> Edit Review
-                            </button>
-                        </div>
-                    <?php else: ?>
-                        <!-- No Review Yet -->
-                        <?php if ($booking['status'] === 'approved'): ?>
-                            <div class="text-center py-4">
-                                <i class="bi bi-chat-left-text text-muted" style="font-size: 3rem;"></i>
-                                <h5 class="mt-3 text-muted">You haven't submitted a review yet</h5>
-                                <p class="text-muted">Share your experience with this charge point.</p>
-                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addReviewModal">
-                                    <i class="bi bi-chat-left-text"></i> Write a Review
-                                </button>
-                            </div>
-                        <?php else: ?>
-                            <div class="text-center py-4">
-                                <i class="bi bi-lock text-muted" style="font-size: 3rem;"></i>
-                                <h5 class="mt-3 text-muted">You can only review approved bookings</h5>
-                                <p class="text-muted">Reviews can be submitted once your booking is approved.</p>
-                            </div>
-                        <?php endif; ?>
+                <div class="d-flex justify-content-end">
+                    <?php if ($canReview): ?>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editReviewModal">
+                        <i class="bi bi-pencil"></i> Edit Review
+                    </button>
                     <?php endif; ?>
                 </div>
+            <?php else: ?>
+                <!-- No Review Yet -->
+                <?php if ($canReview): ?>
+                    <div class="text-center py-4">
+                        <i class="bi bi-chat-left-text fs-1 text-muted"></i>
+                        <h5 class="mt-3 text-muted">You haven't submitted a review yet</h5>
+                        <p class="text-muted">Share your experience with this charge point.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addReviewModal">
+                            <i class="bi bi-chat-left-text"></i> Write a Review
+                        </button>
+                    </div>
+                <?php else: ?>
+                    <div class="text-center py-4">
+                        <i class="bi bi-lock fs-1 text-muted"></i>
+                        <h5 class="mt-3 text-muted">You can't review this booking yet</h5>
+                        <p class="text-muted">
+                            <?php if ($booking['status'] === 'pending'): ?>
+                                This booking needs to be approved, declined, or cancelled before you can leave a review.
+                            <?php else: ?>
+                                You'll be able to review this booking once it ends on <?= date('F j, Y \a\t g:i A', strtotime($booking['end_time'])) ?>.
+                            <?php endif; ?>
+                        </p>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+<!-- Contact Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Message to Homeowner</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="booking_detail.php" method="post">
+                    <input type="hidden" name="action" value="send_message">
+                    <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                    <input type="hidden" name="recipient_id" value="<?= $booking['homeowner_id'] ?>">
+                    
+                    <div class="mb-3">
+                        <label for="messageText" class="form-label">Your Message</label>
+                        <textarea name="message" id="messageText" rows="5" class="form-control" 
+                                  placeholder="Type your message here..." required></textarea>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -196,10 +270,9 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form action="booking.php" method="post">
+                <form action="booking_detail.php" method="post">
                     <input type="hidden" name="action" value="submit_review">
                     <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
-                    <input type="hidden" name="return_detail" value="1">
                     
                     <div class="mb-3">
                         <label class="form-label">Rating</label>
@@ -240,10 +313,9 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form action="booking.php" method="post">
+                <form action="booking_detail.php" method="post">
                     <input type="hidden" name="action" value="submit_review">
                     <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
-                    <input type="hidden" name="return_detail" value="1">
                     
                     <div class="mb-3">
                         <label class="form-label">Rating</label>
@@ -275,5 +347,51 @@
     </div>
 </div>
 <?php endif; ?>
+
+<!-- Include Leaflet JS and initialize the map -->
+<script src="/lib/leaflet.js"></script>
+<script src="/lib/control.GeoCoder.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the latitude and longitude from hidden inputs
+    const latitude = parseFloat(document.getElementById('booking-latitude').value);
+    const longitude = parseFloat(document.getElementById('booking-longitude').value);
+    const address = document.getElementById('charge-point-address').textContent;
+    
+    // Check if we have valid coordinates
+    if (isNaN(latitude) || isNaN(longitude)) {
+        document.getElementById('map-container').innerHTML = 
+            '<div class="alert alert-warning text-center py-4 mb-0">' +
+            '<i class="bi bi-geo-alt fs-1 text-muted"></i>' +
+            '<p class="mt-3 mb-0">Location coordinates not available</p></div>';
+        return;
+    }
+    
+    // Initialize the map
+    const map = L.map('map-container').setView([latitude, longitude], 15);
+    
+    // Add the OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Add a marker at the charge point location
+    const marker = L.marker([latitude, longitude]).addTo(map);
+    marker.bindPopup(`<b>${address}</b><br>Charge Point`).openPopup();
+    
+    // Ensure the map displays correctly
+    setTimeout(function() {
+        map.invalidateSize();
+    }, 100);
+
+    // Scroll to the bottom of message container to show latest messages
+    const messageContainer = document.querySelector('.overflow-auto');
+    if (messageContainer) {
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+});
+</script>
 
 <?php require __DIR__ . '/../partials/footer.phtml'; ?>

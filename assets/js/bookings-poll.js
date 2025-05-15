@@ -115,10 +115,6 @@
           (b.status === 'cancelled' ? 'Uncancel' : 'Cancel') +
           '</button>' : '') +
           
-          // Review Button
-          '<button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#reviewModal' + b.id + '">' +
-          '<i class="bi bi-chat-left-text"></i> Review' +
-          '</button>' +
           '</div>' +
           
           // Status Modal (Cancel/Uncancel)
@@ -146,49 +142,11 @@
           '</div>' +
           '</div>' +
           '</div>' +
-          
-          // Review Modal
-          '<div class="modal fade" id="reviewModal' + b.id + '" tabindex="-1">' +
-          '<div class="modal-dialog modal-dialog-centered">' +
-          '<div class="modal-content">' +
-          '<div class="modal-header">' +
-          '<h5 class="modal-title">Submit Review</h5>' +
-          '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>' +
-          '</div>' +
-          '<div class="modal-body">' +
-          '<form action="booking.php" method="post">' +
-          '<input type="hidden" name="action" value="submit_review">' +
-          '<input type="hidden" name="booking_id" value="' + b.id + '">' +
-          '<div class="mb-3">' +
-          '<label for="rating' + b.id + '" class="form-label">Rating (1-5)</label>' +
-          '<input type="number" min="1" max="5" class="form-control" id="rating' + b.id + '" name="rating" required>' +
-          '</div>' +
-          '<div class="mb-3">' +
-          '<label for="reviewText' + b.id + '" class="form-label">Review</label>' +
-          '<textarea name="comment" id="reviewText' + b.id + '" class="form-control" placeholder="Write your review..." required></textarea>' +
-          '</div>' +
-          '<button type="submit" class="btn btn-primary">Submit</button>' +
-          '</form>' +
-          '</div>' +
-          '<div class="modal-footer">' +
-          '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>' +
-          '</div>' +
-          '</div>' +
-          '</div>' +
-          '</div>' +
           "</td>" +
           "</tr>"
         );
       })
       .join("");
-
-    // Rebind Bootstrap modals if needed
-    if (typeof bootstrap !== 'undefined') {
-      var modals = document.querySelectorAll('.modal');
-      modals.forEach(function(modal) {
-        new bootstrap.Modal(modal);
-      });
-    }
   }
 
   function fetchBookings() {

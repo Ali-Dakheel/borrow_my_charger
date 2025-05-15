@@ -1,7 +1,4 @@
 <?php
-// booking.php
-
-session_start();
 require_once __DIR__ . '/Core/bootstrap.php';
 require_once 'Models/Booking.php';
 require_once 'Models/ChargePoint.php';
