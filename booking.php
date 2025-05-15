@@ -1,14 +1,16 @@
 <?php
 require_once __DIR__ . '/Core/bootstrap.php';
-require_once 'Models/Booking.php';
-require_once 'Models/ChargePoint.php';
-require_once 'Models/Review.php';
-
+require_once 'Models/BookingData.php';
+require_once 'Models/BookingDataset.php';
+require_once 'Models/ChargePointData.php';
+require_once 'Models/ChargePointDataset.php';
+require_once 'Models/ReviewData.php';
+require_once 'Models/ReviewDataset.php';
 
 if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     header('Content-Type: application/json');
-    $model = new Booking($db);
-    $bookings = $model->getByRentalUserIdWithDetails($_SESSION['user_id']);
+    $bookingDataset = new BookingDataset($db);
+    $bookings = $bookingDataset->getByRentalUserIdWithDetails($_SESSION['user_id']);
     echo json_encode($bookings);
     exit;
 }
@@ -36,14 +38,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'total_cost'      => $_POST['total_cost'],
                     'status'          => 'pending',
                 ];
-                (new Booking($db))->create($bookingData);
+                $bookingDataset = new BookingDataset($db);
+                $bookingDataset->create($bookingData);
                 $_SESSION['success'] = 'Booking created successfully!';
                 break;
 
             case 'cancel_booking':
                 $newStatus = ($_POST['current_status'] === 'cancelled')
                     ? 'pending' : 'cancelled';
-                (new Booking($db))->updateBookingStatus(
+                $bookingDataset = new BookingDataset($db);
+                $bookingDataset->updateBookingStatus(
                     $_POST['booking_id'],
                     $newStatus
                 );
@@ -53,7 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             case 'update_status':
-                (new Booking($db))->updateBookingStatus(
+                $bookingDataset = new BookingDataset($db);
+                $bookingDataset->updateBookingStatus(
                     $_POST['booking_id'],
                     $_POST['new_status']
                 );
@@ -62,18 +67,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             case 'submit_review':
-                $reviewModel = new Review($db);
-                $existing = $reviewModel->getByBookingId($_POST['booking_id']);
-                $data = [
-                    'booking_id' => $_POST['booking_id'],
-                    'rating'     => $_POST['rating'],
-                    'comment'    => $_POST['comment'],
-                ];
+                $reviewsDataset = new ReviewsDataset($db);
+                $existing = $reviewsDataset->getByBookingId($_POST['booking_id']);
+                
                 if ($existing) {
-                    $reviewModel->update($existing['review_id'], $data);
+                    $reviewsDataset->update($existing->getReviewId(), $_POST['rating'], $_POST['comment']);
                     $_SESSION['success'] = 'Review updated successfully!';
                 } else {
-                    $reviewModel->create($data);
+                    $reviewsDataset->create($_POST['booking_id'], $_POST['rating'], $_POST['comment']);
                     $_SESSION['success'] = 'Review submitted successfully!';
                 }
                 break;
@@ -88,14 +89,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // 2) FALL‐THROUGH GET‐REQUEST: fetch bookings and render view
-$bookingModel     = new Booking($db);
-$chargePointModel = new ChargePoint($db);
+$bookingDataset = new BookingDataset($db);
+$chargePointDataset = new ChargePointDataset($db);
 
 if ($_SESSION['role'] === 'homeowner') {
-    $bookings = $bookingModel->getByHomeownerIdWithDetails($_SESSION['user_id']);
+    $bookings = $bookingDataset->getByHomeownerIdWithDetails($_SESSION['user_id']);
     require __DIR__ . '/Views/homeowner/booking.phtml';
 } elseif ($_SESSION['role'] === 'user') {
-    $bookings = $bookingModel->getByRentalUserIdWithDetails($_SESSION['user_id']);
+    $bookings = $bookingDataset->getByRentalUserIdWithDetails($_SESSION['user_id']);
     require __DIR__ . '/Views/rentalUser/booking.phtml';
 } else {
     $_SESSION['error'] = 'Invalid user role.';

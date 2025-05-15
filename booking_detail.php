@@ -1,7 +1,9 @@
 <?php
 require_once __DIR__ . '/Core/bootstrap.php';
-require_once 'Models/Booking.php';
-require_once 'Models/ChargePoint.php';
+require_once 'Models/BookingData.php';
+require_once 'Models/BookingDataset.php';
+require_once 'Models/ChargePointData.php';
+require_once 'Models/ChargePointDataset.php';
 require_once 'Models/ReviewData.php';
 require_once 'Models/ReviewDataset.php';
 require_once 'Models/ContactMessages.php';
@@ -12,12 +14,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         switch ($_POST['action'] ?? '') {
             case 'submit_review':
                 // Verify the booking is eligible for review
-                $bookingModel = new Booking($db);
-                $booking = $bookingModel->getBookingWithDetailsByIdForUser($_POST['booking_id'], $_SESSION['user_id']);
+                $bookingDataset = new BookingDataset($db);
+                $bookingResult = $bookingDataset->getBookingWithDetailsByIdForUser($_POST['booking_id'], $_SESSION['user_id']);
                 
-                if (!$booking) {
+                if (!$bookingResult) {
                     throw new Exception("Booking not found");
                 }
+                
+                $booking = $bookingResult['details']; // Use the direct array access for compatibility
                 
                 if ($booking['status'] === 'pending') {
                     throw new Exception("You cannot review pending bookings");
@@ -94,16 +98,19 @@ if (!isset($_GET['id'])) {
 }
 
 $bookingId = (int)$_GET['id'];
-$bookingModel = new Booking($db);
+$bookingDataset = new BookingDataset($db);
 
 // Get booking details for rental user
-$booking = $bookingModel->getBookingWithDetailsByIdForUser($bookingId, $_SESSION['user_id']);
+$bookingResult = $bookingDataset->getBookingWithDetailsByIdForUser($bookingId, $_SESSION['user_id']);
 
-if (!$booking) {
+if (!$bookingResult) {
     $_SESSION['error'] = 'Booking not found or you do not have permission to view it';
     header('Location: booking.php');
     exit();
 }
+
+// Extract the details array for compatibility with the view
+$booking = $bookingResult['details'];
 
 // Get review if exists
 $reviewsDataset = new ReviewsDataset($db);
