@@ -1,0 +1,279 @@
+<?php require __DIR__ . '/../partials/header.phtml'; ?>
+<?php require __DIR__ . '/../partials/navbar.phtml'; ?>
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="booking.php">My Bookings</a></li>
+            <li class="breadcrumb-item active">Booking Details</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-start gap-4 mb-4">
+        <i class="bi bi-calendar-check h2"></i><h2>Booking Details</h2>
+    </div>
+
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show">
+            <?= $_SESSION['success'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['success']); ?>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <?= $_SESSION['error'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+
+    <div class="row g-4">
+        <!-- Booking Details Card -->
+        <div class="col-md-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Booking Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Charge Point</h6>
+                            <p class="fw-bold mb-1"><?= htmlspecialchars($booking['charge_point_address']) ?></p>
+                            <p class="mb-0"><?= htmlspecialchars($booking['charge_point_postcode']) ?></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Homeowner</h6>
+                            <p class="mb-0"><?= htmlspecialchars($booking['homeowner_name']) ?></p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Date</h6>
+                            <p class="mb-0"><?= date('l, F j, Y', strtotime($booking['start_time'])) ?></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Time</h6>
+                            <p class="mb-0">
+                                <?= date('g:i A', strtotime($booking['start_time'])) ?> - 
+                                <?= date('g:i A', strtotime($booking['end_time'])) ?>
+                                <?php
+                                $start = new DateTime($booking['start_time']);
+                                $end = new DateTime($booking['end_time']);
+                                echo " (" . $start->diff($end)->format('%hh %im') . ")";
+                                ?>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Price per kWh</h6>
+                            <p class="mb-0">£<?= number_format($booking['price_per_kwh'], 2) ?></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Total Cost</h6>
+                            <p class="fw-bold mb-0">£<?= number_format($booking['total_cost'], 2) ?></p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Status</h6>
+                            <p class="mb-0">
+                                <span class="badge rounded-pill bg-<?=
+                                    $booking['status'] === 'approved' ? 'success' : 
+                                    ($booking['status'] === 'pending' ? 'warning' : 
+                                    ($booking['status'] === 'cancelled' ? 'secondary' : 'danger'))
+                                ?>">
+                                    <?= ucfirst($booking['status']) ?>
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Booking ID</h6>
+                            <p class="mb-0">#<?= $booking['id'] ?></p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <?php if ($booking['status'] === 'pending' || $booking['status'] === 'cancelled'): ?>
+                            <form action="booking.php" method="post">
+                                <input type="hidden" name="action" value="cancel_booking">
+                                <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                                <input type="hidden" name="current_status" value="<?= $booking['status'] ?>">
+                                <button type="submit" class="btn <?= $booking['status'] === 'cancelled' ? 'btn-success' : 'btn-outline-danger' ?>">
+                                    <i class="bi <?= $booking['status'] === 'cancelled' ? 'bi-arrow-counterclockwise' : 'bi-x-circle' ?>"></i>
+                                    <?= $booking['status'] === 'cancelled' ? 'Restore Booking' : 'Cancel Booking' ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                        <a href="booking.php" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Bookings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map/Location Card -->
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Location</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <p class="fw-bold mb-1"><?= htmlspecialchars($booking['charge_point_address']) ?></p>
+                        <p class="mb-0"><?= htmlspecialchars($booking['charge_point_postcode']) ?></p>
+                    </div>
+                    <!-- Placeholder for a map - you can integrate Google Maps or similar here -->
+                    <div class="bg-light rounded text-center p-4 mb-3" style="height: 200px;">
+                        <i class="bi bi-geo-alt text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2">Location map would appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Card -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Your Review</h5>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($review)): ?>
+                        <!-- Existing Review -->
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2">
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <i class="bi bi-star<?= ($i <= $review['rating']) ? '-fill text-warning' : '' ?>"></i>
+                                    <?php endfor; ?>
+                                </div>
+                                <span class="text-muted small">
+                                    Submitted on <?= date('M j, Y', strtotime($review['created_at'])) ?>
+                                </span>
+                            </div>
+                            <p class="mb-0"><?= htmlspecialchars($review['comment']) ?></p>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editReviewModal">
+                                <i class="bi bi-pencil"></i> Edit Review
+                            </button>
+                        </div>
+                    <?php else: ?>
+                        <!-- No Review Yet -->
+                        <?php if ($booking['status'] === 'approved'): ?>
+                            <div class="text-center py-4">
+                                <i class="bi bi-chat-left-text text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3 text-muted">You haven't submitted a review yet</h5>
+                                <p class="text-muted">Share your experience with this charge point.</p>
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addReviewModal">
+                                    <i class="bi bi-chat-left-text"></i> Write a Review
+                                </button>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-center py-4">
+                                <i class="bi bi-lock text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3 text-muted">You can only review approved bookings</h5>
+                                <p class="text-muted">Reviews can be submitted once your booking is approved.</p>
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Review Modal -->
+<div class="modal fade" id="addReviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Write a Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="booking.php" method="post">
+                    <input type="hidden" name="action" value="submit_review">
+                    <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                    <input type="hidden" name="return_detail" value="1">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rating</label>
+                        <div class="star-rating">
+                            <?php for ($i = 5; $i >= 1; $i--): ?>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="rating" id="rating<?= $i ?>" value="<?= $i ?>" required>
+                                <label class="form-check-label" for="rating<?= $i ?>">
+                                    <?= $i ?> stars
+                                </label>
+                            </div>
+                            <?php endfor; ?>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reviewComment" class="form-label">Your Review</label>
+                        <textarea name="comment" id="reviewComment" rows="4" class="form-control" 
+                                  placeholder="Share your experience with this charge point..." required></textarea>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Review Modal -->
+<?php if (!empty($review)): ?>
+<div class="modal fade" id="editReviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Your Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="booking.php" method="post">
+                    <input type="hidden" name="action" value="submit_review">
+                    <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                    <input type="hidden" name="return_detail" value="1">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rating</label>
+                        <div class="star-rating">
+                            <?php for ($i = 5; $i >= 1; $i--): ?>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="rating" id="editRating<?= $i ?>" 
+                                       value="<?= $i ?>" <?= ($review['rating'] == $i) ? 'checked' : '' ?> required>
+                                <label class="form-check-label" for="editRating<?= $i ?>">
+                                    <?= $i ?> stars
+                                </label>
+                            </div>
+                            <?php endfor; ?>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editReviewComment" class="form-label">Your Review</label>
+                        <textarea name="comment" id="editReviewComment" rows="4" class="form-control" 
+                                  required><?= htmlspecialchars($review['comment']) ?></textarea>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Update Review</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php require __DIR__ . '/../partials/footer.phtml'; ?>

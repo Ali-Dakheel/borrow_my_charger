@@ -253,9 +253,15 @@
                     };
                     document.getElementById('latitude').value = currentLocation.lat;
                     document.getElementById('longitude').value = currentLocation.lng;
+
+                    // Center the map on the user's current location
                     map.setView([currentLocation.lat, currentLocation.lng], 12);
+
+                    // Optionally load charge points near the current location
                     loadChargePoints();
                 }, showError);
+            } else {
+                console.error('Geolocation is not supported by this browser.');
             }
         }
 
@@ -553,6 +559,30 @@
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
         }
+
+        // Add event listener for the location input field
+        document.getElementById('location').addEventListener('input', function () {
+            const location = this.value;
+
+            if (location.trim() !== '') {
+                // Use Leaflet Geocoder to find the location
+                L.Control.Geocoder.nominatim().geocode(location, function (results) {
+                    if (results.length > 0) {
+                        const { center } = results[0];
+                        document.getElementById('latitude').value = center.lat;
+                        document.getElementById('longitude').value = center.lng;
+
+                        // Center the map on the searched location
+                        map.setView([center.lat, center.lng], 12);
+
+                        // Load charge points near the searched location
+                        loadChargePoints();
+                    } else {
+                        console.error('Location not found.');
+                    }
+                });
+            }
+        });
 
         // Make clearAllFilters available globally
         window.clearAllFilters = clearAllFilters;

@@ -114,7 +114,7 @@
                     <?php if ($_SESSION['role'] === 'admin'): ?>
                         <label for="homeowner_id" class="form-label">Choose user</label>
                         <select class="form-select" id="homeowner_id" name="homeowner_id" required>
-                            <?php foreach ($allUsers as $user): ?>
+                            <?php foreach ($allHomeOwners  as $user): ?>
                                 <option value=<?= htmlspecialchars($user['id']) ?>>
                                     <?= $user['name'] ?>
                                 </option>
@@ -184,7 +184,7 @@
                     <?php elseif ($_SESSION['role'] === 'admin'): ?>
                         <label for="editHomeownerId" class="form-label">Choose user</label>
                         <select class="form-select" id="editHomeownerId" name="homeowner_id" required>
-                            <?php foreach ($allUsers as $user): ?>
+                            <?php foreach ($allHomeOwners as $user): ?>
                                 <option value="<?= htmlspecialchars($user['id']) ?>">
                                     <?= htmlspecialchars($user['name']) ?>
                                 </option>

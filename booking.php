@@ -20,6 +20,10 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
+if (isset($_POST['return_detail']) && $_POST['return_detail']) {
+    header('Location: booking_detail.php?id=' . $_POST['booking_id']);
+    exit();
+}
 
 // 1) HANDLE POST *before* any output
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

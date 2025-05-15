@@ -6,6 +6,7 @@ require_once 'Models/User.php';
 $chargePointModel = new ChargePoint($db);
 $usersModel = new User($db);
 $allUsers = $usersModel->getAllUsers();
+$allHomeOwners = $usersModel->getAllHomeowners();
 $limit = 10; // Records per page
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($page - 1) * $limit;
@@ -132,7 +133,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// $chargePoints = $chargePointModel->getAll();
 
 function uploadImage($file)
 {

@@ -1,0 +1,56 @@
+<?php require(__DIR__.'/../partials/header.phtml') ?>
+<?php require(__DIR__.'/../partials/navbar.phtml') ?>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Generate System Report</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="form-group">
+                    <label for="query">SQL Query</label>
+                    <textarea 
+                        class="form-control" 
+                        id="query" 
+                        name="query" 
+                        rows="4"
+                        placeholder="SELECT * FROM table_name"
+                        required
+                    ><?= isset($query) ? htmlspecialchars($query) : '' ?></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Run Query</button>
+            </form>
+
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-danger mt-4"><?= htmlspecialchars($error) ?></div>
+            <?php elseif (!empty($results)): ?>
+                <div class="mt-4">
+                    <h5>Query Results (<?= count($results) ?> rows)</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <?php foreach (array_keys($results[0]) as $column): ?>
+                                        <th><?= htmlspecialchars($column) ?></th>
+                                    <?php endforeach; ?>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($results as $row): ?>
+                                    <tr>
+                                        <?php foreach ($row as $value): ?>
+                                            <td><?= is_string($value) ? htmlspecialchars($value) : $value ?></td>
+                                        <?php endforeach; ?>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<?php require(__DIR__.'/../partials/footer.phtml') ?>

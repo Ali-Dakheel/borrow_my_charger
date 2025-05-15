@@ -70,4 +70,35 @@ class Booking{
             ]
         );
     }
+    public function getBookingWithDetailsByIdForUser($bookingId, $userId) {
+        return $this->db->query(
+            'SELECT b.*, 
+                    cp.address AS charge_point_address,
+                    cp.postcode AS charge_point_postcode,
+                    cp.latitude, cp.longitude,
+                    cp.price_per_kwh,
+                    u.name AS homeowner_name
+             FROM bookings b
+             JOIN charge_points cp ON b.charge_point_id = cp.id
+             JOIN users u ON cp.homeowner_id = u.id
+             WHERE b.id = ? AND b.user_id = ?',
+            [$bookingId, $userId]
+        )->find();
+    }
+    
+    public function getBookingWithDetailsByIdForHomeowner($bookingId, $homeownerId) {
+        return $this->db->query(
+            'SELECT b.*, 
+                    cp.address AS charge_point_address,
+                    cp.postcode AS charge_point_postcode,
+                    cp.latitude, cp.longitude,
+                    cp.price_per_kwh,
+                    u.name AS renter_name
+             FROM bookings b
+             JOIN charge_points cp ON b.charge_point_id = cp.id
+             JOIN users u ON b.user_id = u.id
+             WHERE b.id = ? AND cp.homeowner_id = ?',
+            [$bookingId, $homeownerId]
+        )->find();
+    }
     }

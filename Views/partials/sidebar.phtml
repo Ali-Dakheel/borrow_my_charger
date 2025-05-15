@@ -1,4 +1,4 @@
-<div class="sidebar border border-right col-md-3 col-lg-2 p-0 bg-body-tertiary" style="height: 100vh; overflow-y: auto;">
+<div class="sidebar border border-right col-md-3 col-lg-2 p-0 bg-body-tertiary min-vh-100">
     <div class="offcanvas-md offcanvas-end bg-body-tertiary" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
         <div class="offcanvas-header">
             <h5 class="offcanvas-title" id="sidebarMenuLabel">Borrow My Charger</h5>
@@ -30,6 +30,12 @@
                     <a class="nav-link d-flex align-items-center gap-2" href="/approveHomeowner.php">
                         <svg class="bi" width="16" height="16"><use xlink:href="#people-fill"/></svg>
                         Approve homeowner registrations
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center gap-2" href="/reports.php">
+                        <svg class="bi" width="16" height="16"><use xlink:href="#people-fill"/></svg>
+                        Reports
                     </a>
                 </li>
                 <?php endif; ?>
@@ -70,27 +76,15 @@
                 </li> -->
                 <?php endif; ?>
                 <!-- Shared Items -->
-                <li class="nav-item">
-                    <a class="nav-link d-flex align-items-center gap-2" href="/notifications">
-                        <svg class="bi" width="16" height="16"><use xlink:href="#bell-fill"/></svg>
-                        Notifications
-                    </a>
-                </li>
             </ul>
             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
                 <span>Account</span>
             </h6>
             <ul class="nav flex-column mb-auto">
                 <li class="nav-item">
-                    <a class="nav-link d-flex align-items-center gap-2" href="/profile">
+                    <a class="nav-link d-flex align-items-center gap-2" href="/profile.php">
                         <svg class="bi" width="16" height="16"><use xlink:href="#person-circle"/></svg>
                         Profile
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link d-flex align-items-center gap-2" href="/settings">
-                        <svg class="bi" width="16" height="16"><use xlink:href="#gear-fill"/></svg>
-                        Settings
                     </a>
                 </li>
             </ul>
