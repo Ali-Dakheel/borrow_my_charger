@@ -9,7 +9,7 @@ if ($session->isLoggedIn()) {
     if ($role === 'admin') {
         header('Location: /dashboard.php');
     } elseif ($role === 'homeowner') {
-        header('Location: /dashboard.php');
+        header('Location: dashboard.php');
     } else {
         header('Location: /dashboard.php');
     }

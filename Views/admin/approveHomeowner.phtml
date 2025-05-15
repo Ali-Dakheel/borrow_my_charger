@@ -1,53 +1,153 @@
 <?php require(__DIR__.'/../partials/header.phtml') ?>
 <?php require(__DIR__.'/../partials/navbar.phtml') ?>
 
-<div class="container mt-5">
-    <h2 class="mb-4">Pending Homeowner Approvals</h2>
+<div class="container-fluid py-4">
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex justify-content-start gap-4 mb-4">
+                    <i class="bi bi-person-check h2"></i>
+                    <h2 >Pending Homeowner Approvals</h2>
+                </div>
+                
+                <div class="d-flex align-items-center text-muted small">
+                    <i class="bi bi-clock me-1"></i>
+                    Current time: <?= date('Y-m-d H:i:s') ?>
+                </div>
+            </div>
 
-    <!-- Flash Messages -->
-    <?php if (!empty($_SESSION['success'])): ?>
-        <div class="alert alert-success">
-            <?= htmlspecialchars($_SESSION['success']) ?>
+            <!-- Flash Messages -->
+            <?php if (!empty($_SESSION['success'])): ?>
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <?= htmlspecialchars($_SESSION['success']) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <?php unset($_SESSION['success']); ?>
+            <?php endif; ?>
+
+            <?php if (!empty($_SESSION['error'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <?= htmlspecialchars($_SESSION['error']) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <?php unset($_SESSION['error']); ?>
+            <?php endif; ?>
+
+            <?php if (!empty($pendingHomeowners)): ?>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Username</th>
+                                <th scope="col">Email</th>
+                                <th scope="col" class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($pendingHomeowners as $homeowner): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($homeowner['id']) ?></td>
+                                    <td class="fw-medium"><?= htmlspecialchars($homeowner['username']) ?></td>
+                                    <td><?= htmlspecialchars($homeowner['email']) ?></td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end">
+                                            <button type="button" class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#viewDetailsModal<?= $homeowner['id'] ?>">
+                                                <i class="bi bi-eye"></i> Details
+                                            </button>
+                                            <form method="POST" action="">
+                                                <input type="hidden" name="approve_id" value="<?= htmlspecialchars($homeowner['id']) ?>">
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="bi bi-check-lg me-1"></i> Approve
+                                                </button>
+                                            </form>
+                                        </div>
+                                        
+                                        <!-- Details Modal -->
+                                        <div class="modal fade" id="viewDetailsModal<?= $homeowner['id'] ?>" tabindex="-1" aria-labelledby="viewDetailsModalLabel<?= $homeowner['id'] ?>" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-light">
+                                                        <h5 class="modal-title" id="viewDetailsModalLabel<?= $homeowner['id'] ?>">Homeowner Details</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="d-flex justify-content-center mb-3">
+                                                            <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; font-size: 36px;">
+                                                                <?= strtoupper(substr($homeowner['username'], 0, 1)) ?>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="mb-3 text-center">
+                                                            <h5><?= htmlspecialchars($homeowner['username']) ?></h5>
+                                                            <p class="text-muted mb-0">Pending Approval</p>
+                                                        </div>
+                                                        
+                                                        <hr>
+                                                        
+                                                        <div class="row g-3 mb-3">
+                                                            <div class="col-md-6">
+                                                                <div class="mb-2">
+                                                                    <span class="text-muted">ID:</span>
+                                                                    <div class="fw-medium"><?= htmlspecialchars($homeowner['id']) ?></div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="mb-2">
+                                                                    <span class="text-muted">Email:</span>
+                                                                    <div class="fw-medium"><?= htmlspecialchars($homeowner['email']) ?></div>
+                                                                </div>
+                                                            </div>
+                                                            <?php if (!empty($homeowner['name'])): ?>
+                                                            <div class="col-md-6">
+                                                                <div class="mb-2">
+                                                                    <span class="text-muted">Full Name:</span>
+                                                                    <div class="fw-medium"><?= htmlspecialchars($homeowner['name'] ?? 'Not provided') ?></div>
+                                                                </div>
+                                                            </div>
+                                                            <?php endif; ?>
+                                                            <?php if (!empty($homeowner['created_at'])): ?>
+                                                            <div class="col-md-6">
+                                                                <div class="mb-2">
+                                                                    <span class="text-muted">Joined:</span>
+                                                                    <div class="fw-medium"><?= date('M j, Y', strtotime($homeowner['created_at'])) ?></div>
+                                                                </div>
+                                                            </div>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                                                        <form method="POST" action="" class="d-inline">
+                                                            <input type="hidden" name="approve_id" value="<?= htmlspecialchars($homeowner['id']) ?>">
+                                                            <button type="submit" class="btn btn-success">
+                                                                <i class="bi bi-check-lg me-1"></i> Approve Homeowner
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <div class="text-center py-5">
+                    <i class="bi bi-check-circle fs-1 text-success mb-3 d-block"></i>
+                    <h4 class="text-muted">No Pending Approvals</h4>
+                    <p class="text-muted">All homeowner registrations have been processed.</p>
+                    <a href="/dashboard.php" class="btn btn-outline-primary mt-2">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            <?php endif; ?>
         </div>
-        <?php unset($_SESSION['success']); ?>
-    <?php endif; ?>
-
-    <?php if (!empty($_SESSION['error'])): ?>
-        <div class="alert alert-danger">
-            <?= htmlspecialchars($_SESSION['error']) ?>
-        </div>
-        <?php unset($_SESSION['error']); ?>
-    <?php endif; ?>
-
-    <?php if (!empty($pendingHomeowners)): ?>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($pendingHomeowners as $homeowner): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($homeowner['id']) ?></td>
-                        <td><?= htmlspecialchars($homeowner['username']) ?></td>
-                        <td><?= htmlspecialchars($homeowner['email']) ?></td>
-                        <td>
-                            <form method="POST" action="">
-                                <input type="hidden" name="approve_id" value="<?= htmlspecialchars($homeowner['id']) ?>">
-                                <button type="submit" class="btn btn-success btn-sm">Approve</button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php else: ?>
-        <p class="text-muted">No pending homeowners for approval.</p>
-    <?php endif; ?>
+    </div>
 </div>
 
 <?php require(__DIR__.'/../partials/footer.phtml') ?>

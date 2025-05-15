@@ -1,46 +1,198 @@
 <?php require(__DIR__.'/../partials/header.phtml') ?>
 <?php require(__DIR__.'/../partials/navbar.phtml') ?>
 
-<div class="container mt-4">
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Generate System Report</h5>
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex gap-4">
+            <i class="bi bi-bar-chart-fill h2"></i>
+            <h2 >System Reports & Analytics</h2>
+        </div>
+        <div class="d-flex align-items-center text-muted small">
+            <i class="bi bi-clock me-1"></i> 
+            <?= date('Y-m-d H:i:s') ?> UTC
+            <span class="mx-2">|</span>
+            <i class="bi bi-person-fill me-1"></i>
+            <?= htmlspecialchars($_SESSION['username'] ?? 'Admin') ?>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Users Stats -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-people-fill text-primary fs-2 me-2"></i>
+                        <h5 class="card-title mb-0">Users</h5>
+                    </div>
+                    <h3 class="card-text mb-3"><?= number_format($metrics['users']['total'] ?? 0) ?></h3>
+                    <div class="d-flex flex-column">
+                        <?php if (!empty($metrics['users']['roles'])): ?>
+                            <div class="d-flex justify-content-between mb-2 small">
+                                <span class="text-muted">Homeowners:</span>
+                                <span class="fw-medium">
+                                    <?= array_values(array_filter($metrics['users']['roles'], function($r) { 
+                                        return $r['role'] === 'homeowner'; 
+                                    }))[0]['count'] ?? 0 ?>
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between small">
+                                <span class="text-muted">Active Users:</span>
+                                <span class="fw-medium">
+                                    <?= array_values(array_filter($metrics['users']['statuses'], function($s) { 
+                                        return $s['status'] === 'active'; 
+                                    }))[0]['count'] ?? 0 ?>
+                                </span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charge Points Stats -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-plug-fill text-success fs-2 me-2"></i>
+                        <h5 class="card-title mb-0">Charge Points</h5>
+                    </div>
+                    <h3 class="card-text mb-3"><?= number_format($metrics['chargePoints']['total'] ?? 0) ?></h3>
+                    <div class="d-flex flex-column">
+                        <div class="d-flex justify-content-between mb-2 small">
+                            <span class="text-muted">Available:</span>
+                            <span class="fw-medium"><?= number_format($metrics['chargePoints']['available'] ?? 0) ?></span>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted">Avg. Price:</span>
+                            <span class="fw-medium">£<?= number_format($metrics['chargePoints']['avg_price'] ?? 0, 2) ?>/kWh</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bookings Stats -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-calendar-check-fill text-warning fs-2 me-2"></i>
+                        <h5 class="card-title mb-0">Bookings</h5>
+                    </div>
+                    <h3 class="card-text mb-3"><?= number_format($metrics['bookings']['total'] ?? 0) ?></h3>
+                    <div class="d-flex flex-column">
+                        <div class="d-flex justify-content-between mb-2 small">
+                            <span class="text-muted">Total Revenue:</span>
+                            <span class="fw-medium">£<?= number_format($metrics['bookings']['revenue'] ?? 0, 2) ?></span>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted">Last 30 days:</span>
+                            <span class="fw-medium"><?= number_format($metrics['bookings']['recent'] ?? 0) ?></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Activity -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-activity text-danger fs-2 me-2"></i>
+                        <h5 class="card-title mb-0">Activity</h5>
+                    </div>
+                    <h3 class="card-text mb-3"><?= number_format($metrics['activity']['reviews'] ?? 0) ?> Reviews</h3>
+                    <div class="d-flex flex-column">
+                        <div class="d-flex justify-content-between mb-2 small">
+                            <span class="text-muted">Avg. Rating:</span>
+                            <span class="fw-medium">
+                                <?= number_format($metrics['activity']['avg_rating'] ?? 0, 1) ?>/5.0
+                                <i class="bi bi-star-fill text-warning"></i>
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted">Messages:</span>
+                            <span class="fw-medium"><?= number_format($metrics['activity']['messages'] ?? 0) ?></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom SQL Query -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0">Custom SQL Report</h5>
+            <span class="badge bg-primary">SQL</span>
         </div>
         <div class="card-body">
             <form method="POST">
-                <div class="form-group">
-                    <label for="query">SQL Query</label>
-                    <textarea 
-                        class="form-control" 
-                        id="query" 
-                        name="query" 
-                        rows="4"
-                        placeholder="SELECT * FROM table_name"
-                        required
-                    ><?= isset($query) ? htmlspecialchars($query) : '' ?></textarea>
+                <div class="mb-3">
+                    <label for="query" class="form-label">Enter SQL Query</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-code-slash"></i></span>
+                        <textarea 
+                            class="form-control font-monospace" 
+                            id="query" 
+                            name="query" 
+                            rows="5"
+                            placeholder="SELECT * FROM table_name"
+                            required
+                        ><?= isset($query) ? htmlspecialchars($query) : '' ?></textarea>
+                    </div>
+                    <div class="form-text">
+                        Run SQL queries to generate custom reports on system data. For example:
+                        <code>SELECT count(*) FROM users WHERE role = 'homeowner'</code>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary mt-3">Run Query</button>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-lightning-charge-fill me-1"></i> Run Query
+                    </button>
+                </div>
             </form>
 
             <?php if (!empty($error)): ?>
-                <div class="alert alert-danger mt-4"><?= htmlspecialchars($error) ?></div>
+                <div class="alert alert-danger mt-4">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <?= htmlspecialchars($error) ?>
+                </div>
             <?php elseif (!empty($results)): ?>
                 <div class="mt-4">
-                    <h5>Query Results (<?= count($results) ?> rows)</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Query Results</h5>
+                        <span class="badge bg-success"><?= count($results) ?> rows returned</span>
+                    </div>
                     <div class="table-responsive">
-                        <table class="table table-bordered table-striped">
-                            <thead class="thead-dark">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
                                 <tr>
-                                    <?php foreach (array_keys($results[0]) as $column): ?>
-                                        <th><?= htmlspecialchars($column) ?></th>
-                                    <?php endforeach; ?>
+                                    <?php if (!empty($results)): ?>
+                                        <?php foreach (array_keys($results[0]) as $column): ?>
+                                            <th><?= htmlspecialchars($column) ?></th>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($results as $row): ?>
                                     <tr>
                                         <?php foreach ($row as $value): ?>
-                                            <td><?= is_string($value) ? htmlspecialchars($value) : $value ?></td>
+                                            <td>
+                                                <?php if (is_null($value)): ?>
+                                                    <span class="text-muted">NULL</span>
+                                                <?php elseif ($value === ''): ?>
+                                                    <span class="text-muted">(empty string)</span>
+                                                <?php else: ?>
+                                                    <?= is_string($value) ? htmlspecialchars($value) : $value ?>
+                                                <?php endif; ?>
+                                            </td>
                                         <?php endforeach; ?>
                                     </tr>
                                 <?php endforeach; ?>
@@ -51,6 +203,70 @@
             <?php endif; ?>
         </div>
     </div>
+
+    <!-- Suggested Queries -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Helpful Queries</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title">Top Rated Charge Points</h6>
+                            <pre class="bg-light p-2 rounded"><code>SELECT cp.id, cp.address, AVG(r.rating) as avg_rating, COUNT(r.review_id) as review_count 
+FROM charge_points cp 
+JOIN bookings b ON cp.id = b.charge_point_id 
+JOIN reviews r ON b.id = r.booking_id 
+GROUP BY cp.id 
+ORDER BY avg_rating DESC 
+LIMIT 10</code></pre>
+                            <button class="btn btn-sm btn-outline-primary copy-query">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title">Monthly Revenue</h6>
+                            <pre class="bg-light p-2 rounded"><code>SELECT 
+    DATE_FORMAT(b.created_at, '%Y-%m') as month, 
+    SUM(b.total_cost) as revenue 
+FROM bookings b 
+WHERE b.status = 'approved' 
+GROUP BY month 
+ORDER BY month DESC 
+LIMIT 6</code></pre>
+                            <button class="btn btn-sm btn-outline-primary copy-query">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Copy query buttons
+    document.querySelectorAll('.copy-query').forEach(button => {
+        button.addEventListener('click', function() {
+            const queryText = this.closest('.card-body').querySelector('code').textContent;
+            navigator.clipboard.writeText(queryText).then(() => {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-check2"></i> Copied!';
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                }, 2000);
+            });
+        });
+    });
+});
+</script>
 
 <?php require(__DIR__.'/../partials/footer.phtml') ?>

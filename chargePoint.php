@@ -112,6 +112,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header("Location: chargePoint.php?success=created");
                 exit;
             case 'update':
+                $existingChargePoint = $chargePointModel->getByHomeOwnerById($_POST['homeowner_id']);
+                if ($existingChargePoint && $existingChargePoint['id'] != $_POST['id']) {
+                    header("Location: chargePoint.php?error=homeowner_already_has_charge_point");
+                    exit;
+                }
+
                 $chargePointModel->update([
                     'id' => $_POST['id'],
                     'homeowner_id' => $_POST['homeowner_id'],

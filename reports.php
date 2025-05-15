@@ -1,19 +1,24 @@
 <?php
 require_once __DIR__ . '/Core/bootstrap.php';
+require_once 'Models/Report.php';
+$reportModel = new Report($db);
 
-use Core\Database;
-
-$db = new Database();
 $error = '';
 $results = [];
 $query = '';
+
+try {
+    $metrics = $reportModel->getDashboardMetrics();
+} catch (Exception $e) {
+    $error = 'Error fetching metrics: ' . $e->getMessage();
+    $metrics = [];
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $query = $_POST['query'] ?? '';
     
     try {
-        $db->query($query);
-        $results = $db->findAll();
+        $results = $reportModel->executeQuery($query);
     } catch (PDOException $e) {
         $error = 'Database Error: ' . $e->getMessage();
     } catch (Exception $e) {

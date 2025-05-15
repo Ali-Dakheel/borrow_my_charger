@@ -1,4 +1,384 @@
-<?php require(__DIR__.'/../partials/header.phtml') ?>
-<?php require(__DIR__.'/..partials/navbar.phtml') ?>
+<?php require(__DIR__ . '/../partials/header.phtml') ?>
+<?php require(__DIR__ . '/../partials/navbar.phtml') ?>
 
-<?php require(__DIR__.'/..partials/footer.phtml') ?>
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-house-gear fs-3 me-2"></i>
+            <h2 class="mb-0">Homeowner Dashboard</h2>
+        </div>
+        <div class="text-muted small">
+            <i class="bi bi-clock me-1"></i> <?= date('Y-m-d H:i:s') ?> UTC <span class="mx-2">|</span>
+            <i class="bi bi-person-fill me-1"></i> <?= htmlspecialchars($currentUser) ?>
+        </div>
+    </div>
+
+    <!-- Status Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-4 col-md-6">
+            <div class="card h-100 <?= $chargePoint ? 'bg-success text-white' : 'bg-danger text-white' ?>">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Charge Point Status</h6>
+                            <h3 class="mb-0"><?= $chargePoint ? 'Active' : 'Not Set Up' ?></h3>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi <?= $chargePoint ? 'bi-plug-fill' : 'bi-exclamation-triangle-fill' ?>"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <?php if ($chargePoint): ?>
+                            <p class="mb-1">
+                                <span class="text-white-50">Location:</span>
+                                <?= htmlspecialchars($chargePoint['address']) ?>
+                            </p>
+                            <p class="mb-0">
+                                <span class="text-white-50">Price:</span>
+                                £<?= number_format($chargePoint['price_per_kwh'], 2) ?>/kWh
+                            </p>
+                        <?php else: ?>
+                            <p class="mb-0">You need to set up your charge point to start receiving booking requests.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between <?= $chargePoint ? 'bg-success bg-opacity-75' : 'bg-danger bg-opacity-75' ?>">
+                    <?php if ($chargePoint): ?>
+                        <a href="/editChargePoint.php" class="text-white text-decoration-none">
+                            <span>Edit Charge Point</span>
+                            <i class="bi bi-pencil ms-2"></i>
+                        </a>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="availabilityToggle" <?= $chargePoint['is_available'] ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="availabilityToggle">Available</label>
+                        </div>
+                    <?php else: ?>
+                        <a href="/addChargePoint.php" class="text-white text-decoration-none">
+                            <span>Set Up Now</span>
+                            <i class="bi bi-arrow-right ms-2"></i>
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Booking Requests</h6>
+                            <h3 class="mb-0"><?= number_format($pendingBookings) ?> Pending</h3>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <p class="mb-0">
+                            <span class="text-white-50">Upcoming:</span>
+                            <?= number_format($upcomingBookings) ?> approved bookings
+                        </p>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between bg-primary bg-opacity-75">
+                    <a href="/manageBookings.php" class="text-white text-decoration-none">
+                        <span>Manage Bookings</span>
+                        <i class="bi bi-chevron-right ms-2"></i>
+                    </a>
+                    <span class="badge bg-light text-primary rounded-pill"><?= number_format($bookingsToday) ?> today</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Revenue</h6>
+                            <h3 class="mb-0">£<?= number_format($totalRevenue, 2) ?></h3>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-cash-coin"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <p class="mb-0">
+                            <span class="text-white-50">This month:</span>
+                            £<?= number_format($revenueThisMonth, 2) ?>
+                        </p>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between bg-warning bg-opacity-75">
+                    <a href="/earnings.php" class="text-white text-decoration-none">
+                        <span>View Earnings</span>
+                        <i class="bi bi-chevron-right ms-2"></i>
+                    </a>
+                    <span class="badge bg-light text-warning rounded-pill"><?= number_format($completedBookings) ?> completed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Pending Bookings -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-plus me-2"></i>Pending Booking Requests
+                    </h5>
+                    <a href="/manageBookings.php" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (empty($pendingBookingsList)): ?>
+                        <div class="text-center py-5">
+                            <i class="bi bi-calendar-check text-muted fs-1 mb-3"></i>
+                            <h5 class="text-muted">No Pending Bookings</h5>
+                            <p class="text-muted">You don't have any booking requests to approve</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Start</th>
+                                        <th>End</th>
+                                        <th>Amount</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($pendingBookingsList as $booking): ?>
+                                        <tr>
+                                            <td class="fw-medium"><?= htmlspecialchars($booking['username']) ?></td>
+                                            <td><?= date('M j, Y H:i', strtotime($booking['start_time'])) ?></td>
+                                            <td><?= date('M j, Y H:i', strtotime($booking['end_time'])) ?></td>
+                                            <td>£<?= number_format($booking['total_cost'], 2) ?></td>
+                                            <td class="text-end">
+                                                <div class="btn-group" role="group">
+                                                    <form method="POST" action="/manageBookings.php" class="d-inline">
+                                                        <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                                                        <input type="hidden" name="action" value="approve">
+                                                        <button type="submit" class="btn btn-sm btn-success">
+                                                            <i class="bi bi-check-lg"></i> Approve
+                                                        </button>
+                                                    </form>
+                                                    <form method="POST" action="/manageBookings.php" class="d-inline">
+                                                        <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                                                        <input type="hidden" name="action" value="decline">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            <i class="bi bi-x-lg"></i> Decline
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Messages -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-chat-left-text me-2"></i>Recent Messages
+                    </h5>
+                    <a href="/messages.php" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (empty($recentMessages)): ?>
+                        <div class="text-center py-5">
+                            <i class="bi bi-chat-square-text text-muted fs-1 mb-3"></i>
+                            <h5 class="text-muted">No Messages</h5>
+                            <p class="text-muted">You don't have any recent messages</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($recentMessages as $message): ?>
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">From: <?= htmlspecialchars($message['sender']) ?></h6>
+                                        <small class="text-muted"><?= $reportModel->timeAgo($message['sent_at']) ?></small>
+                                    </div>
+                                    <p class="mb-1 small"><?= htmlspecialchars(substr($message['message'], 0, 100)) ?>...</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar-event me-1"></i> Booking #<?= $message['booking_id'] ?>
+                                        </small>
+                                        <a href="/messages.php?id=<?= $message['id'] ?>" class="btn btn-sm btn-outline-primary">Reply</a>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charge Point Performance -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Your Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h6 class="text-muted">Customer Rating</h6>
+                                    <div class="d-flex align-items-center mb-3">
+                                        <h2 class="mb-0 me-2"><?= number_format($averageRating, 1) ?></h2>
+                                        <div class="text-warning">
+                                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                <i class="bi <?= $i <= round($averageRating) ? 'bi-star-fill' : 'bi-star' ?>"></i>
+                                            <?php endfor; ?>
+                                        </div>
+                                    </div>
+                                    <p class="text-muted small mb-0">Based on <?= number_format($totalReviews) ?> reviews</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h6 class="text-muted">Booking Approval Rate</h6>
+                                    <div class="d-flex align-items-center mb-3">
+                                        <h2 class="mb-0 me-2"><?= $approvalRate ?>%</h2>
+                                        <div class="progress flex-grow-1" style="height: 8px">
+                                            <div class="progress-bar bg-success" role="progressbar"
+                                                style="width: <?= $approvalRate ?>%"
+                                                aria-valuenow="<?= $approvalRate ?>"
+                                                aria-valuemin="0"
+                                                aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                    <p class="text-muted small mb-0">
+                                        You've approved <?= number_format($approvedBookings) ?> out of <?= number_format($totalProcessedBookings) ?> booking requests
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h6 class="text-muted">Performance Ranking</h6>
+                                    <div class="d-flex align-items-center mb-3">
+                                        <h2 class="mb-0 me-2"><?= ordinalNumber($performanceRank) ?></h2>
+                                        <div class="badge bg-<?= $performanceRank <= 10 ? 'success' : ($performanceRank <= 50 ? 'primary' : 'secondary') ?>">
+                                            Top <?= $performancePercentile ?>%
+                                        </div>
+                                    </div>
+                                    <p class="text-muted small mb-0">
+                                        Based on bookings, ratings, and response time
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-lightning-charge me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <?php if ($chargePoint): ?>
+                                <a href="/editChargePoint.php" class="card text-decoration-none h-100">
+                                    <div class="card-body text-center py-4">
+                                        <i class="bi bi-pencil-square fs-1 text-primary mb-3"></i>
+                                        <h5>Edit Charge Point</h5>
+                                        <p class="text-muted mb-0 small">Update your charge point details</p>
+                                    </div>
+                                </a>
+                            <?php else: ?>
+                                <a href="/addChargePoint.php" class="card text-decoration-none h-100">
+                                    <div class="card-body text-center py-4">
+                                        <i class="bi bi-plus-circle fs-1 text-success mb-3"></i>
+                                        <h5>Add Charge Point</h5>
+                                        <p class="text-muted mb-0 small">Set up your charge point</p>
+                                    </div>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/manageBookings.php" class="card text-decoration-none h-100">
+                                <div class="card-body text-center py-4">
+                                    <i class="bi bi-calendar-check fs-1 text-warning mb-3"></i>
+                                    <h5>Manage Bookings</h5>
+                                    <p class="text-muted mb-0 small">View and respond to booking requests</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/messages.php" class="card text-decoration-none h-100">
+                                <div class="card-body text-center py-4">
+                                    <i class="bi bi-chat-dots fs-1 text-info mb-3"></i>
+                                    <h5>Messages</h5>
+                                    <p class="text-muted mb-0 small">Communicate with users</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/reviews.php" class="card text-decoration-none h-100">
+                                <div class="card-body text-center py-4">
+                                    <i class="bi bi-star-half fs-1 text-danger mb-3"></i>
+                                    <h5>Reviews</h5>
+                                    <p class="text-muted mb-0 small">See what users think of your charge point</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Availability toggle functionality
+        const availabilityToggle = document.getElementById('availabilityToggle');
+        if (availabilityToggle) {
+            availabilityToggle.addEventListener('change', function() {
+                const isAvailable = this.checked;
+
+                // Submit form to update availability
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/updateAvailability.php';
+
+                const hiddenField = document.createElement('input');
+                hiddenField.type = 'hidden';
+                hiddenField.name = 'is_available';
+                hiddenField.value = isAvailable ? '1' : '0';
+
+                form.appendChild(hiddenField);
+                document.body.appendChild(form);
+                form.submit();
+            });
+        }
+    });
+</script>
+
+<?php require(__DIR__ . '/../partials/footer.phtml') ?>

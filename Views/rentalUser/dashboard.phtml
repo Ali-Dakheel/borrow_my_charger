@@ -1,4 +1,386 @@
 <?php require(__DIR__.'/../partials/header.phtml') ?>
-<?php require(__DIR__.'/..partials/navbar.phtml') ?>
+<?php require(__DIR__.'/../partials/navbar.phtml') ?>
 
-<?php require(__DIR__.'/..partials/footer.phtml') ?>
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-speedometer2 fs-3 me-2"></i>
+            <h2 class="mb-0">User Dashboard</h2>
+        </div>
+        <div class="text-muted small">
+            <i class="bi bi-clock me-1"></i> 2025-05-15 07:59:25 UTC
+            <span class="mx-2">|</span>
+            <i class="bi bi-person-fill me-1"></i> Ali-Dakheel
+        </div>
+    </div>
+
+    <!-- Status Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Upcoming Bookings</h6>
+                            <h3 class="mb-0"><?= number_format($upcomingBookings) ?></h3>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <?php if (!empty($nextBooking)): ?>
+                        <p class="mb-0">
+                            <span class="text-white-50">Next booking:</span> 
+                            <?= date('M j, Y H:i', strtotime($nextBooking['start_time'])) ?>
+                        </p>
+                        <?php else: ?>
+                        <p class="mb-0">No upcoming bookings scheduled.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between bg-primary bg-opacity-75">
+                    <a href="/myBookings.php" class="text-white text-decoration-none">
+                        <span>View My Bookings</span>
+                        <i class="bi bi-chevron-right ms-2"></i>
+                    </a>
+                    <span class="badge bg-light text-primary rounded-pill"><?= number_format($pendingBookings) ?> pending</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Charge Points Near You</h6>
+                            <h3 class="mb-0"><?= number_format($nearbyChargePoints) ?> Available</h3>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-geo-alt-fill"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <p class="mb-1">
+                            <span class="text-white-50">Average price:</span> 
+                            £<?= number_format($avgPrice, 2) ?>/kWh
+                        </p>
+                        <p class="mb-0">
+                            <span class="text-white-50">Within:</span> 
+                            <?= $searchRadius ?> miles of your location
+                        </p>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between bg-success bg-opacity-75">
+                    <a href="/findChargePoint.php" class="text-white text-decoration-none">
+                        <span>Find Charge Points</span>
+                        <i class="bi bi-chevron-right ms-2"></i>
+                    </a>
+                    <span class="badge bg-light text-success rounded-pill"><?= number_format($newChargePoints) ?> new</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Messages</h6>
+                            <h3 class="mb-0"><?= number_format($unreadMessages) ?> Unread</h3>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-chat-left-text-fill"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <p class="mb-0">
+                            <span class="text-white-50">Total conversations:</span> 
+                            <?= number_format($totalConversations) ?>
+                        </p>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between bg-info bg-opacity-75">
+                    <a href="/messages.php" class="text-white text-decoration-none">
+                        <span>View Messages</span>
+                        <i class="bi bi-chevron-right ms-2"></i>
+                    </a>
+                    <span class="badge bg-light text-info rounded-pill"><?= number_format($newMessages24h) ?> today</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-4"><i class="bi bi-search me-2"></i>Find a Charge Point</h5>
+            <form action="/findChargePoint.php" method="get">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                            <input type="text" class="form-control" id="location" name="location" placeholder="Postcode or Address">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-arrows-expand"></i></span>
+                            <select class="form-select" id="radius" name="radius">
+                                <option value="5">Within 5 miles</option>
+                                <option value="10" selected>Within 10 miles</option>
+                                <option value="25">Within 25 miles</option>
+                                <option value="50">Within 50 miles</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-currency-pound"></i></span>
+                            <select class="form-select" id="priceRange" name="price_range">
+                                <option value="">Any Price</option>
+                                <option value="0-0.20">Under £0.20/kWh</option>
+                                <option value="0.20-0.30">£0.20 - £0.30/kWh</option>
+                                <option value="0.30-0.50">£0.30 - £0.50/kWh</option>
+                                <option value="0.50-99">Above £0.50/kWh</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search me-1"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Upcoming Bookings -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-week me-2"></i>Your Bookings
+                    </h5>
+                    <a href="/myBookings.php" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (empty($recentBookings)): ?>
+                        <div class="text-center py-5">
+                            <i class="bi bi-calendar text-muted fs-1 mb-3"></i>
+                            <h5 class="text-muted">No Bookings</h5>
+                            <p class="text-muted">You don't have any recent bookings</p>
+                            <a href="/findChargePoint.php" class="btn btn-outline-primary mt-2">Find a Charge Point</a>
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Location</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Status</th>
+                                        <th>Cost</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($recentBookings as $booking): ?>
+                                        <tr>
+                                            <td class="fw-medium"><?= htmlspecialchars($booking['address']) ?></td>
+                                            <td><?= date('M j, Y', strtotime($booking['start_time'])) ?></td>
+                                            <td><?= date('H:i', strtotime($booking['start_time'])) ?> - <?= date('H:i', strtotime($booking['end_time'])) ?></td>
+                                            <td>
+                                                <span class="badge rounded-pill bg-<?= 
+                                                    $booking['status'] === 'approved' ? 'success' : 
+                                                    ($booking['status'] === 'pending' ? 'warning' : 
+                                                    ($booking['status'] === 'declined' ? 'danger' : 'secondary')) 
+                                                ?>">
+                                                    <?= ucfirst($booking['status']) ?>
+                                                </span>
+                                            </td>
+                                            <td>£<?= number_format($booking['total_cost'], 2) ?></td>
+                                            <td class="text-end">
+                                                <div class="btn-group" role="group">
+                                                    <a href="/bookingDetails.php?id=<?= $booking['id'] ?>" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-info-circle"></i> Details
+                                                    </a>
+                                                    <?php if ($booking['status'] === 'approved' && strtotime($booking['end_time']) < time()): ?>
+                                                        <a href="/writeReview.php?id=<?= $booking['id'] ?>" class="btn btn-sm btn-outline-warning">
+                                                            <i class="bi bi-star"></i> Review
+                                                        </a>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Messages -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-chat-left-text me-2"></i>Recent Messages
+                    </h5>
+                    <a href="/messages.php" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (empty($recentMessages)): ?>
+                        <div class="text-center py-5">
+                            <i class="bi bi-chat-square-text text-muted fs-1 mb-3"></i>
+                            <h5 class="text-muted">No Messages</h5>
+                            <p class="text-muted">You don't have any recent messages</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($recentMessages as $message): ?>
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">From: <?= htmlspecialchars($message['sender']) ?></h6>
+                                        <small class="text-muted"><?= timeAgo($message['sent_at']) ?></small>
+                                    </div>
+                                    <p class="mb-1 small"><?= htmlspecialchars(substr($message['message'], 0, 100)) ?>...</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar-event me-1"></i> Booking #<?= $message['booking_id'] ?>
+                                        </small>
+                                        <a href="/messages.php?id=<?= $message['id'] ?>" class="btn btn-sm btn-outline-primary">Reply</a>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map View -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-map me-2"></i>Charge Points Near You</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="chargePointsMap" style="height: 400px;"></div>
+                </div>
+                <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">Showing <?= number_format($nearbyChargePoints) ?> charge points within <?= $searchRadius ?> miles</span>
+                    <a href="/findChargePoint.php" class="btn btn-sm btn-outline-primary">Advanced Search</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-lightning-charge me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="/findChargePoint.php" class="card text-decoration-none h-100">
+                                <div class="card-body text-center py-4">
+                                    <i class="bi bi-search fs-1 text-primary mb-3"></i>
+                                    <h5>Find Charge Points</h5>
+                                    <p class="text-muted mb-0 small">Search for available charge points</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/myBookings.php" class="card text-decoration-none h-100">
+                                <div class="card-body text-center py-4">
+                                    <i class="bi bi-calendar-check fs-1 text-warning mb-3"></i>
+                                    <h5>My Bookings</h5>
+                                    <p class="text-muted mb-0 small">View your booking history</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/messages.php" class="card text-decoration-none h-100">
+                                <div class="card-body text-center py-4">
+                                    <i class="bi bi-chat-dots fs-1 text-info mb-3"></i>
+                                    <h5>Messages</h5>
+                                    <p class="text-muted mb-0 small">Communicate with homeowners</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/profile.php" class="card text-decoration-none h-100">
+                                <div class="card-body text-center py-4">
+                                    <i class="bi bi-person-circle fs-1 text-success mb-3"></i>
+                                    <h5>My Profile</h5>
+                                    <p class="text-muted mb-0 small">Update your account information</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Leaflet.js for maps -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the map
+    const map = L.map('chargePointsMap').setView([51.505, -0.09], 12);
+    
+    // Add tile layer (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // Check if geolocation is available
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            // Center map on user's location
+            map.setView([position.coords.latitude, position.coords.longitude], 13);
+            
+            // Add marker for user's location
+            L.marker([position.coords.latitude, position.coords.longitude])
+                .addTo(map)
+                .bindPopup('Your location')
+                .openPopup();
+            
+            // Fetch nearby charge points via AJAX
+            fetch(`/api/getNearbyChargePoints.php?lat=${position.coords.latitude}&lng=${position.coords.longitude}&radius=<?= $searchRadius ?>`)
+                .then(response => response.json())
+                .then(data => {
+                    // Add markers for charge points
+                    data.forEach(point => {
+                        const marker = L.marker([point.latitude, point.longitude])
+                            .addTo(map)
+                            .bindPopup(
+                                `<strong>${point.address}</strong><br>
+                                £${point.price_per_kwh}/kWh<br>
+                                <a href="/bookChargePoint.php?id=${point.id}" class="btn btn-sm btn-primary mt-2">Book Now</a>`
+                            );
+                    });
+                })
+                .catch(error => console.error('Error fetching charge points:', error));
+        });
+    }
+});
+</script>
+
+<?php require(__DIR__.'/../partials/footer.phtml') ?>
