@@ -1,19 +1,43 @@
 <?php
-// ContactMessageDataset.php
 require_once(__DIR__ . '/ContactMessageData.php');
 
 use Core\Database;
 
+/**
+ * Class ContactMessageDataset
+ *
+ * Data access layer for contact messages related to bookings. Provides methods to create,
+ * retrieve, and delete messages exchanged between users regarding a booking.
+ */
 class ContactMessageDataset
 {
+    /**
+     * @var Database Database connection instance
+     */
     protected $db;
     
+    /**
+     * ContactMessageDataset constructor.
+     *
+     * @param Database $db The database connection to use for queries
+     */
     public function __construct(Database $db)
     {
         $this->db = $db;
     }
 
-    public function create($data)
+    /**
+     * Create a new contact message record.
+     *
+     * @param array $data Associative array with keys:
+     *                    - booking_id: int Booking ID
+     *                    - sender_id: int Sender user ID
+     *                    - recipient_id: int Recipient user ID
+     *                    - message: string Message content
+     * @return mixed Result of the insert query
+     * @throws Exception If the database insert fails
+     */
+    public function create(array $data)
     {
         try {
             return $this->db->query(
@@ -31,7 +55,14 @@ class ContactMessageDataset
         }
     }
 
-    public function getMessagesByBookingId($bookingId)
+    /**
+     * Retrieve all messages for a given booking ID, including sender and recipient names.
+     *
+     * @param int $bookingId Booking ID to fetch messages for
+     * @return array List of message records with sender_name, recipient_name, sender_role
+     * @throws Exception If the database query fails
+     */
+    public function getMessagesByBookingId(int $bookingId): array
     {
         try {
             $rows = $this->db->query(
@@ -47,29 +78,31 @@ class ContactMessageDataset
                 [$bookingId]
             )->findAll();
             
-            // For compatibility with the existing view, return the array directly
-            // In a more complete refactoring, we would return ContactMessageData objects
+            // Return raw rows for view compatibility
             return $rows;
-            
-            // Alternative implementation that returns objects but might require view changes:
-            /*
-            $messages = [];
-            foreach ($rows as $row) {
-                $messages[] = new ContactMessageData($row);
-            }
-            return $messages;
-            */
         } catch (PDOException $e) {
             throw new Exception("Failed to fetch messages: " . $e->getMessage());
         }
     }
 
-    public function deleteMessage($messageId)
+    /**
+     * Delete a contact message by its ID.
+     *
+     * @param int $messageId Message ID to delete
+     * @return mixed Result of the delete query
+     */
+    public function deleteMessage(int $messageId)
     {
         return $this->db->query("DELETE FROM contact_messages WHERE id = ?", [$messageId]);
     }
     
-    public function getById($id)
+    /**
+     * Retrieve a single contact message by its ID.
+     *
+     * @param int $id Message ID
+     * @return ContactMessageData|null ContactMessageData object or null if not found
+     */
+    public function getById(int $id): ?ContactMessageData
     {
         $row = $this->db->query('SELECT * FROM contact_messages WHERE id = ?', [$id])->find();
         

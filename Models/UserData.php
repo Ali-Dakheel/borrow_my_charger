@@ -1,93 +1,189 @@
 <?php
-// UserData.php
+
+/**
+ * Class UserData
+ *
+ * Represents a user entity with authentication, authorization, and status information.
+ */
 class UserData
 {
-    protected $id, $username, $name, $password, $role, $status, $isApproved, $createdAt;
+    /** @var int|null Unique identifier for the user */
+    protected $id;
 
-    public function __construct($row)
+    /** @var string|null Username used for login */
+    protected $username;
+
+    /** @var string|null Full name of the user */
+    protected $name;
+
+    /** @var string|null Hashed password for authentication */
+    protected $password;
+
+    /** @var string|null Role assigned to the user (e.g., admin, homeowner, user) */
+    protected $role;
+
+    /** @var string|null Current account status (e.g., active, pending, suspended) */
+    protected $status;
+
+    /** @var int|null Approval flag (1 = approved, 0 = not approved) */
+    protected $isApproved;
+
+    /** @var string|null Timestamp when the user account was created (Y-m-d H:i:s) */
+    protected $createdAt;
+
+    /**
+     * UserData constructor.
+     *
+     * @param array $row Associative array representing a database row for a user.
+     */
+    public function __construct(array $row)
     {
-        $this->id = $row['id'] ?? null;
-        $this->username = $row['username'] ?? null;
-        $this->name = $row['name'] ?? null;
-        $this->password = $row['password'] ?? null;
-        $this->role = $row['role'] ?? null;
-        $this->status = $row['status'] ?? null;
+        $this->id         = $row['id'] ?? null;
+        $this->username   = $row['username'] ?? null;
+        $this->name       = $row['name'] ?? null;
+        $this->password   = $row['password'] ?? null;
+        $this->role       = $row['role'] ?? null;
+        $this->status     = $row['status'] ?? null;
         $this->isApproved = $row['is_approved'] ?? null;
-        $this->createdAt = $row['created_at'] ?? null;
+        $this->createdAt  = $row['created_at'] ?? null;
     }
 
-    public function getId()
+    /**
+     * Get the user ID.
+     *
+     * @return int|null
+     */
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getUsername()
+    /**
+     * Get the username.
+     *
+     * @return string|null
+     */
+    public function getUsername(): ?string
     {
         return $this->username;
     }
 
-    public function getName()
+    /**
+     * Get the full name.
+     *
+     * @return string|null
+     */
+    public function getName(): ?string
     {
         return $this->name;
     }
     
-    public function getPassword()
+    /**
+     * Get the hashed password.
+     *
+     * @return string|null
+     */
+    public function getPassword(): ?string
     {
         return $this->password;
     }
 
-    public function getRole()
+    /**
+     * Get the user role.
+     *
+     * @return string|null
+     */
+    public function getRole(): ?string
     {
         return $this->role;
     }
 
-    public function getStatus()
+    /**
+     * Get the account status.
+     *
+     * @return string|null
+     */
+    public function getStatus(): ?string
     {
         return $this->status;
     }
     
-    public function isApproved()
+    /**
+     * Check if the user account is approved.
+     *
+     * @return bool True if approved, false otherwise
+     */
+    public function isApproved(): bool
     {
-        return $this->isApproved == 1;
+        return (int) $this->isApproved === 1;
     }
     
-    public function getIsApproved()
+    /**
+     * Get the raw approval flag.
+     *
+     * @return int|null
+     */
+    public function getIsApproved(): ?int
     {
         return $this->isApproved;
     }
 
-    public function getCreatedAt()
+    /**
+     * Get the creation timestamp.
+     *
+     * @return string|null
+     */
+    public function getCreatedAt(): ?string
     {
         return $this->createdAt;
     }
     
-    public function isHomeowner()
+    /**
+     * Check if the user is a homeowner.
+     *
+     * @return bool
+     */
+    public function isHomeowner(): bool
     {
         return $this->role === 'homeowner';
     }
 
-    public function isAdmin()
+    /**
+     * Check if the user is an administrator.
+     *
+     * @return bool
+     */
+    public function isAdmin(): bool
     {
         return $this->role === 'admin';
     }
     
-    public function isActive()
+    /**
+     * Check if the user account is active.
+     *
+     * @return bool
+     */
+    public function isActive(): bool
     {
         return $this->status === 'active';
     }
     
-    // Helper method to convert to array for compatibility with templates
-    public function toArray()
+    /**
+     * Convert this object to an associative array for template compatibility.
+     *
+     * @return array
+     */
+    public function toArray(): array
     {
         return [
-            'id' => $this->id,
-            'username' => $this->username,
-            'name' => $this->name,
-            'password' => $this->password,
-            'role' => $this->role,
-            'status' => $this->status,
-            'is_approved' => $this->isApproved,
-            'created_at' => $this->createdAt
+            'id'           => $this->id,
+            'username'     => $this->username,
+            'name'         => $this->name,
+            'password'     => $this->password,
+            'role'         => $this->role,
+            'status'       => $this->status,
+            'is_approved'  => $this->isApproved,
+            'created_at'   => $this->createdAt,
         ];
     }
 }

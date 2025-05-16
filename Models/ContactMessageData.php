@@ -1,60 +1,119 @@
 <?php
-// ContactMessageData.php
+
+/**
+ * Class ContactMessageData
+ *
+ * Represents a contact message related to a booking, including sender, recipient, content, and timestamp.
+ */
 class ContactMessageData
 {
-    protected $id, $bookingId, $senderId, $recipientId, $message, $sentAt;
+    /** @var int|null Unique identifier for the message */
+    protected $id;
 
-    public function __construct($row)
+    /** @var int|null Booking ID associated with this message */
+    protected $bookingId;
+
+    /** @var int|null User ID of the sender */
+    protected $senderId;
+
+    /** @var int|null User ID of the recipient */
+    protected $recipientId;
+
+    /** @var string|null Content of the message */
+    protected $message;
+
+    /** @var string|null Timestamp when the message was sent (Y-m-d H:i:s) */
+    protected $sentAt;
+
+    /**
+     * ContactMessageData constructor.
+     *
+     * @param array $row Associative array representing a database row for a contact message
+     */
+    public function __construct(array $row)
     {
-        $this->id = $row['id'] ?? null;
-        $this->bookingId = $row['booking_id'] ?? null;
-        $this->senderId = $row['sender_id'] ?? null;
+        $this->id          = $row['id'] ?? null;
+        $this->bookingId   = $row['booking_id'] ?? null;
+        $this->senderId    = $row['sender_id'] ?? null;
         $this->recipientId = $row['recipient_id'] ?? null;
-        $this->message = $row['message'] ?? null;
-        $this->sentAt = $row['sent_at'] ?? null;
-        }
+        $this->message     = $row['message'] ?? null;
+        $this->sentAt      = $row['sent_at'] ?? null;
+    }
 
-    public function getId()
+    /**
+     * Get the message ID.
+     *
+     * @return int|null
+     */
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getBookingId()
+    /**
+     * Get the booking ID associated with this message.
+     *
+     * @return int|null
+     */
+    public function getBookingId(): ?int
     {
         return $this->bookingId;
     }
 
-    public function getSenderId()
+    /**
+     * Get the sender's user ID.
+     *
+     * @return int|null
+     */
+    public function getSenderId(): ?int
     {
         return $this->senderId;
     }
 
-    public function getRecipientId()
+    /**
+     * Get the recipient's user ID.
+     *
+     * @return int|null
+     */
+    public function getRecipientId(): ?int
     {
         return $this->recipientId;
     }
 
-    public function getMessage()
+    /**
+     * Get the message content.
+     *
+     * @return string|null
+     */
+    public function getMessage(): ?string
     {
         return $this->message;
     }
 
-    public function getSentAt()
+    /**
+     * Get the timestamp when the message was sent.
+     *
+     * @return string|null
+     */
+    public function getSentAt(): ?string
     {
         return $this->sentAt;
     }
-    
-    
-    // Helper method to convert to array for compatibility with templates
-    public function toArray()
+
+    /**
+     * Convert this object to an associative array for template compatibility.
+     *
+     * @return array
+     */
+    public function toArray(): array
     {
         return [
-            'id' => $this->id,
-            'booking_id' => $this->bookingId,
-            'sender_id' => $this->senderId,
+            'id'           => $this->id,
+            'booking_id'   => $this->bookingId,
+            'sender_id'    => $this->senderId,
             'recipient_id' => $this->recipientId,
-            'message' => $this->message,
-            'sent_at' => $this->sentAt,
+            'message'      => $this->message,
+            'sent_at'      => $this->sentAt,
         ];
     }
 }

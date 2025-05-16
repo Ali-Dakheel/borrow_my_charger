@@ -160,8 +160,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Image upload function - unchanged
-function uploadImage($file)
+/**
+ * Handle image file upload to the assets/images directory.
+ *
+ * Validates the upload, ensures the target directory exists, checks file extension,
+ * generates a secure random filename, and moves the file to the public assets folder.
+ *
+ * @param array|null $file The uploaded file array from \$_FILES (or null if none). Expected keys:
+ *     - string 'name': Original filename
+ *     - string 'tmp_name': Temporary upload path
+ *     - int    'error': Upload error code (UPLOAD_ERR_*)
+ * @return string|null Relative path to the saved image (e.g., "assets/images/abc123.jpg"), or null if no file provided.
+ * @throws Exception If the file extension is not allowed or the move operation fails.
+ */function uploadImage($file)
 {
     if (! $file || $file['error'] !== UPLOAD_ERR_OK) {
         return null;

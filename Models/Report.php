@@ -355,6 +355,11 @@ class Report
 
     /**
      * Execute custom SQL query
+     * 
+     * Allows for executing arbitrary SQL queries for custom reporting needs
+     *
+     * @param string $query The SQL query to execute
+     * @return array The result of the query as an array of records
      */
     public function executeQuery($query)
     {
@@ -364,6 +369,12 @@ class Report
     
     /**
      * Helper function to format time ago
+     * 
+     * Converts a datetime string to a human-readable "time ago" format
+     * For example: "2 hours ago", "3 days ago", etc.
+     *
+     * @param string $datetime The datetime string to format
+     * @return string Human-readable time difference
      */
     public function timeAgo($datetime)
     {

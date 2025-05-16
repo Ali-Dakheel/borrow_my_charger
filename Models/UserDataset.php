@@ -4,25 +4,56 @@ require_once(__DIR__ . '/UserData.php');
 
 use Core\Database;
 
+/**
+ * UserDataset Class
+ * 
+ * Handles all database operations related to user management including
+ * creating, retrieving, updating, and deleting user records.
+ */
 class UserDataset
 {
+    /**
+     * @var Database Database connection instance
+     */
     protected $db;
 
+    /**
+     * Constructor
+     * 
+     * @param Database $db Database connection instance
+     */
     public function __construct(Database $db)
     {
         $this->db = $db;
     }
+
+    /**
+     * Check if a user with the given username already exists
+     * 
+     * @param string $username The username to check
+     * @return array|null Row data if user exists, null otherwise
+     */
     public function checkExistingUser($username){
         $row = $this->db->query("SELECT id FROM users WHERE username = ?", [$username])->find();
         return $row;
     }
 
+    /**
+     * Get all users from the database
+     * 
+     * @return array All user records ordered by creation date (newest first)
+     */
     public function getAllUsers()
     {
         $rows = $this->db->query('SELECT * FROM users ORDER BY created_at DESC')->findAll();
         return $rows;
     }
     
+    /**
+     * Get all users with homeowner role
+     * 
+     * @return array All homeowner user records
+     */
     public function getAllHomeowners()
     {
         $rows = $this->db->query('SELECT * FROM users where role = ?', [
@@ -31,6 +62,12 @@ class UserDataset
         return $rows;
     }
 
+    /**
+     * Get a specific user by their ID
+     * 
+     * @param int $id User ID
+     * @return UserData|null User data object if found, null otherwise
+     */
     public function getUserById($id)
     {
         $row = $this->db->query('SELECT * FROM users WHERE id = ?', [$id])->find();
@@ -40,6 +77,14 @@ class UserDataset
         return new UserData($row);
     }
 
+    /**
+     * Update a user's status
+     * 
+     * @param int $id User ID
+     * @param string $status New status ('pending', 'active', or 'suspended')
+     * @return mixed Query result
+     * @throws InvalidArgumentException If status is invalid
+     */
     public function updateUserStatus($id, $status)
     {
         $validStatuses = ['pending', 'active', 'suspended'];
@@ -52,6 +97,14 @@ class UserDataset
         );
     }
 
+    /**
+     * Update a user's role
+     * 
+     * @param int $id User ID
+     * @param string $role New role ('homeowner', 'admin', or 'user')
+     * @return mixed Query result
+     * @throws InvalidArgumentException If role is invalid
+     */
     public function updateUserRole($id, $role)
     {
         $validRoles = ['homeowner', 'admin', 'user'];
@@ -64,11 +117,23 @@ class UserDataset
         );
     }
 
+    /**
+     * Delete a user from the database
+     * 
+     * @param int $id User ID to delete
+     * @return mixed Query result
+     */
     public function deleteUser($id)
     {
         return $this->db->query('DELETE FROM users WHERE id = ?', [$id]);
     }
 
+    /**
+     * Search for users by username, name or email
+     * 
+     * @param string $query Search term
+     * @return array Matching user records
+     */
     public function searchUsers($query)
     {
         $rows = $this->db->query(
@@ -80,6 +145,12 @@ class UserDataset
         return $rows;
     }
     
+    /**
+     * Approve a homeowner by setting is_approved flag
+     * 
+     * @param int $id User ID to approve
+     * @return mixed Query result
+     */
     public function approveHomeowner($id)
     {
         return $this->db->query(
@@ -88,6 +159,11 @@ class UserDataset
         );
     }
     
+    /**
+     * Get all homeowners pending approval
+     * 
+     * @return array Pending homeowner records
+     */
     public function getAllPendingHomeowners()
     {
         $rows = $this->db->query(
@@ -97,6 +173,13 @@ class UserDataset
         return $rows;
     }
 
+    /**
+     * Update user data with specified fields
+     * 
+     * @param int $id User ID to update
+     * @param array $data Associative array of fields to update
+     * @return mixed Query result
+     */
     public function update($id, $data)
     {
         $fields = [];
@@ -144,12 +227,25 @@ class UserDataset
         return $this->db->query($query, $values);
     }
     
+    /**
+     * Check if a homeowner is approved
+     * 
+     * @param int $id User ID to check
+     * @return bool True if the user is an approved homeowner, false otherwise
+     */
     public function isHomeownerApproved($id)
     {
         $user = $this->getUserById($id);
         return $user && $user->getRole() === 'homeowner' && $user->getIsApproved() == 1;
     }
     
+    /**
+     * Create a new user in the database
+     * 
+     * @param array $data User data including required fields (username, name, password)
+     * @return mixed Query result
+     * @throws InvalidArgumentException If required fields are missing
+     */
     public function create($data)
     {
         // Check for required fields

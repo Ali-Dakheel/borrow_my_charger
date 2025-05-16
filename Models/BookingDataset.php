@@ -3,10 +3,24 @@ require_once(__DIR__ . '/BookingData.php');
 
 use Core\Database;
 
+/**
+ * Class BookingDataset
+ *
+ * Data access layer for booking records. Provides methods to retrieve,
+ * create, update, and cancel bookings with various scopes and details.
+ */
 class BookingDataset
 {
+    /**
+     * @var Database Database connection instance
+     */
     protected $db;
 
+    /**
+     * BookingDataset constructor.
+     *
+     * @param Database $db The database connection to use for queries
+     */
     public function __construct(Database $db)
     {
         $this->db = $db;
@@ -32,6 +46,12 @@ class BookingDataset
             throw new Exception("Failed to fetch bookings: " . $e->getMessage());
         }
     }
+    /**
+     * Retrieve bookings for a homeowner with detailed charge point and renter info.
+     *
+     * @param int $homeownerId The homeowner's user ID
+     * @return array List of detailed booking records
+     */
     public function getByHomeownerIdWithDetails($homeownerId)
     {
         return $this->db->query(
@@ -49,7 +69,12 @@ class BookingDataset
             [$homeownerId]
         )->findAll();
     }
-
+    /**
+     * Retrieve bookings for a rental user with homeowner details.
+     *
+     * @param int $userId The rental user's ID
+     * @return array List of booking records including homeowner info
+     */
     public function getByRentalUserIdWithDetails($userId)
     {
         return $this->db->query(
@@ -66,7 +91,14 @@ class BookingDataset
             [$userId]
         )->findAll();
     }
-
+    /**
+     * Update the status of a booking.
+     *
+     * @param int $id Booking ID
+     * @param string $status New status (pending|approved|cancelled|declined)
+     * @return mixed The result of the update query
+     * @throws InvalidArgumentException If the status is invalid
+     */
     public function updateBookingStatus($id, $status)
     {
         $validStatuses = ['pending', 'approved', 'cancelled', 'declined'];
@@ -80,7 +112,12 @@ class BookingDataset
             [$status, $id]
         );
     }
-
+    /**
+     * Cancel a booking by setting its status to 'cancelled'.
+     *
+     * @param int $id Booking ID
+     * @return mixed The result of the update query
+     */
     public function cancelBooking($id)
     {
         return $this->db->query(
@@ -88,7 +125,12 @@ class BookingDataset
             [$id]
         );
     }
-
+    /**
+     * Create a new booking record.
+     *
+     * @param array $data Booking data including user_id, charge_point_id, start_time, end_time, total_cost, status
+     * @return mixed The result of the insert query
+     */
     public function create($data)
     {
         return $this->db->query(
@@ -104,7 +146,13 @@ class BookingDataset
             ]
         );
     }
-
+    /**
+     * Retrieve a booking with charge point and homeowner details for a specific user.
+     *
+     * @param int $bookingId Booking ID
+     * @param int $userId Rental user ID
+     * @return array|null ['booking' => BookingData, 'details' => array] or null if not found
+     */
     public function getBookingWithDetailsByIdForUser($bookingId, $userId)
     {
         $data = $this->db->query(
@@ -135,7 +183,13 @@ class BookingDataset
             'details' => $data
         ];
     }
-
+    /**
+     * Retrieve a booking with charge point and renter details for a specific homeowner.
+     *
+     * @param int $bookingId Booking ID
+     * @param int $homeownerId Homeowner user ID
+     * @return array|null ['booking' => BookingData, 'details' => array] or null if not found
+     */
     public function getBookingWithDetailsByIdForHomeowner($bookingId, $homeownerId)
     {
         $data = $this->db->query(
@@ -165,7 +219,12 @@ class BookingDataset
             'details' => $data
         ];
     }
-
+    /**
+     * Retrieve a single booking by its ID.
+     *
+     * @param int $id Booking ID
+     * @return BookingData|null The BookingData object or null if not found
+     */
     public function getById($id)
     {
         $row = $this->db->query('SELECT * FROM bookings WHERE id = ?', [$id])->find();
