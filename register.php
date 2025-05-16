@@ -1,7 +1,9 @@
 <?php
 require_once __DIR__ . '/Core/bootstrap.php';
-require_once 'Models/ChargePoint.php';
-require_once 'Models/User.php'; // Add this line to include the User model
+require_once 'Models/ChargePointData.php';
+require_once 'Models/ChargePointDataset.php';
+require_once 'Models/UserData.php';
+require_once 'Models/UserDataset.php';
 
 $message = null;
 $userId = null;
@@ -13,8 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Check if this is a charge point creation submission from a recently registered homeowner
     if (isset($_POST['action']) && $_POST['action'] === 'create_charge_point') {
         try {
-            // Create a new charge point
-            $chargePointModel = new ChargePoint($db);
+            // Create a new charge point using the dataset class
+            $chargePointDataset = new ChargePointDataset($db);
             
             // Validate and sanitize input
             if (empty($_POST['address']) || empty($_POST['postcode']) || 
@@ -44,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'image_path' => null // You can add image upload functionality later
             ];
             
-            $chargePointModel->create($chargePointData);
+            $chargePointDataset->create($chargePointData);
             
             // Start session and log in the user
             session_start();
@@ -68,6 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Regular registration form processing
     else if (isset($_POST['username'], $_POST['name'], $_POST['password'], $_POST['confirm_password'], $_POST['role'])) {
         try {
+            // Initialize the UserDataset
+            $userDataset = new UserDataset($db);
+            
             // Retrieve and trim input values
             $username = trim($_POST['username']);
             $name = trim($_POST['name']);
@@ -86,11 +91,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception('Username already exists. Please choose another one.');
             }
 
-            // Hash the password    
-            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-
-            // Prepare the SQL query and execute it with PDO parameters
+            // Prepare user data (note: the create method in UserDataset will hash the password)
+            $userData = [
+                'username' => $username,
+                'name' => $name,
+                'password' => $password, // Will be hashed in UserDataset::create
+                'role' => $role,
+                'status' => 'active',
+                'is_approved' => ($role === 'homeowner') ? 0 : 1 // Homeowners need approval
+            ];
+            
+            // Use direct SQL query to avoid required email field
+            // Note: UserDataset::create() requires email which isn't used in the form
             $sql = "INSERT INTO users (username, name, password, role, status) VALUES (?, ?, ?, ?, 'active')";
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
             $result = $db->query($sql, [$username, $name, $hashedPassword, $role]);
 
             // Check if a row was inserted

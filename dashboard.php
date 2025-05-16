@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__ . '/Core/bootstrap.php';
 require_once 'Models/Report.php';
-require_once 'Models/User.php';
+require_once 'Models/UserData.php';
+require_once 'Models/UserDataset.php';
 require_once 'Models/Dashboard.php';
 
 // Check if user is logged in
@@ -13,6 +14,7 @@ if (!isset($_SESSION['user_id'])) {
 // Initialize models
 $reportModel = new Report($db);
 $dashboardModel = new Dashboard($db);
+$userDataset = new UserDataset($db);
 
 // Get user role and route to appropriate dashboard
 $userRole = $_SESSION['role'] ?? 'user';
@@ -65,8 +67,8 @@ switch ($userRole) {
         // Get reviews created in the last 24 hours
         $reviews24h = $dashboardModel->getReviews24h();
         
-        // Get pending homeowners to approve
-        $pendingHomeowners = $dashboardModel->getPendingHomeowners();
+        // Get pending homeowners to approve - use UserDataset instead of Dashboard
+        $pendingHomeowners = $userDataset->getAllPendingHomeowners();
         
         // Get recent system activity
         $recentActivity = $reportModel->getRecentSystemActivity();
@@ -91,6 +93,9 @@ switch ($userRole) {
         // Get homeowner's charge point
         $chargePoint = $dashboardModel->getHomeownerChargePoint($userId);
         $chargePointId = $chargePoint['id'] ?? null;
+        
+        // Check if homeowner is approved using UserDataset
+        $isApproved = $userDataset->isHomeownerApproved($userId);
         
         // Basic stats
         if ($chargePointId) {

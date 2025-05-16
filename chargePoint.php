@@ -1,24 +1,31 @@
 <?php
 require_once __DIR__ . '/Core/bootstrap.php';
-require_once 'Models/ChargePoint.php';
-require_once 'Models/User.php';
+require_once 'Models/ChargePointData.php';
+require_once 'Models/ChargePointDataset.php';
+require_once 'Models/UserData.php';
+require_once 'Models/UserDataset.php';
 
-$chargePointModel = new ChargePoint($db);
-$usersModel = new User($db);
-$allUsers = $usersModel->getAllUsers();
-$allHomeOwners = $usersModel->getAllHomeowners();
+$chargePointDataset = new ChargePointDataset($db);
+$userDataset = new UserDataset($db);
+$allUsers = $userDataset->getAllUsers();
+$allHomeOwners = $userDataset->getAllHomeowners();
 $limit = 10; // Records per page
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($page - 1) * $limit;
 
 // Fetch paginated charge points
-$chargePoints = $chargePointModel->getPaginated($limit, $offset);
+$chargePoints = $chargePointDataset->getPaginated($limit, $offset);
 
 // Calculate total pages
-$totalCount = $chargePointModel->getTotalCount();
+$totalCount = $chargePointDataset->getTotalCount();
 $totalPages = ceil($totalCount / $limit);
+
 if ($_SESSION['role'] === 'homeowner') {
-    $chargePoint = $chargePointModel->getByHomeOwnerById($_SESSION['user_id']);
+    $chargePoint = $chargePointDataset->getByHomeOwnerById($_SESSION['user_id']);
+    // If the result is an object, convert it to array for view compatibility
+    if ($chargePoint instanceof ChargePointData) {
+        $chargePoint = $chargePoint->toArray();
+    }
 }
 
 // Handle AJAX search requests
@@ -35,9 +42,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'search') {
         $longitude = isset($_GET['longitude']) ? floatval($_GET['longitude']) : null;
 
         // Get all charge points
-        $chargePoints = $chargePointModel->getAll();
+        $chargePoints = $chargePointDataset->getAll();
 
-        // Filter results
+        // Filter results - same logic as before
         $filtered = array_filter($chargePoints, function ($point) use ($location, $minPrice, $maxPrice, $availableOnly, $latitude, $longitude) {
             // Availability check
             if ($availableOnly && !$point['is_available']) return false;
@@ -67,7 +74,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'search') {
             return true;
         });
 
-        // Format results
+        // Format results - unchanged
         $result = array_map(function ($point) {
             return [
                 'id' => $point['id'],
@@ -89,17 +96,21 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'search') {
         exit;
     }
 }
+
+// Handle POST requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         switch ($_POST['action']) {
             case 'create':
-                $existingChargePoint = $chargePointModel->getByHomeOwnerById($_POST['homeowner_id']);
+                $existingChargePoint = $chargePointDataset->getByHomeOwnerById($_POST['homeowner_id']);
+                
+                // Handle both object and array return types
                 if ($existingChargePoint) {
                     header("Location: chargePoint.php?error=homeowner_already_has_charge_point");
                     exit;
                 }
 
-                $chargePointModel->create([
+                $chargePointDataset->create([
                     'homeowner_id' => $_POST['homeowner_id'],
                     'address' => $_POST['address'],
                     'postcode' => $_POST['postcode'],
@@ -111,14 +122,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
                 header("Location: chargePoint.php?success=created");
                 exit;
+                
             case 'update':
-                $existingChargePoint = $chargePointModel->getByHomeOwnerById($_POST['homeowner_id']);
-                if ($existingChargePoint && $existingChargePoint['id'] != $_POST['id']) {
-                    header("Location: chargePoint.php?error=homeowner_already_has_charge_point");
-                    exit;
+                $existingChargePoint = $chargePointDataset->getByHomeOwnerById($_POST['homeowner_id']);
+                
+                // Carefully check for both object and array return types
+                if ($existingChargePoint) {
+                    $existingId = ($existingChargePoint instanceof ChargePointData) 
+                        ? $existingChargePoint->getId() 
+                        : $existingChargePoint['id'];
+                        
+                    if ($existingId != $_POST['id']) {
+                        header("Location: chargePoint.php?error=homeowner_already_has_charge_point");
+                        exit;
+                    }
                 }
 
-                $chargePointModel->update([
+                $chargePointDataset->update([
                     'id' => $_POST['id'],
                     'homeowner_id' => $_POST['homeowner_id'],
                     'address' => $_POST['address'],
@@ -131,15 +151,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
                 header("Location: chargePoint.php?success=updated");
                 exit;
+                
             case 'delete':
-                $chargePointModel->delete($_POST['id']);
+                $chargePointDataset->delete($_POST['id']);
                 header("Location: chargePoint.php?success=deleted");
                 exit;
         }
     }
 }
 
-
+// Image upload function - unchanged
 function uploadImage($file)
 {
     if (! $file || $file['error'] !== UPLOAD_ERR_OK) {
@@ -168,6 +189,7 @@ function uploadImage($file)
     return $relative;
 }
 
+// Load appropriate view based on role - unchanged
 if ($_SESSION['role'] === 'admin') {
     require "Views/admin/chargePoint.phtml";
 } elseif ($_SESSION['role'] === 'homeowner') {

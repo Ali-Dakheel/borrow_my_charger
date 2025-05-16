@@ -1,4 +1,5 @@
-<?php require(__DIR__.'/../partials/header.phtml') ?>
+<?php
+require(__DIR__.'/../partials/header.phtml') ?>
 <?php require(__DIR__.'/../partials/navbar.phtml') ?>
 
 <!-- Include Leaflet CSS -->
@@ -8,9 +9,9 @@
     <h2>My Charge Point</h2>
     
     <?php 
-    // Check if homeowner is approved
-    $userModel = new User($db);
-    $isApproved = $userModel->isHomeownerApproved($_SESSION['user_id']); 
+    // Check if homeowner is approved - using UserDataset instead of User model
+    $userDataset = new UserDataset($db);
+    $isApproved = $userDataset->isHomeownerApproved($_SESSION['user_id']); 
     ?>
     
     <?php if (!$isApproved): ?>

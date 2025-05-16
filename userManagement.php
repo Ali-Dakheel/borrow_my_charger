@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/Core/bootstrap.php';
-require_once 'Models/User.php';
+require_once 'Models/UserData.php';
+require_once 'Models/UserDataset.php';
 
 
 // Check if admin
@@ -9,23 +10,23 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-$userModel = new User($db);
+$userDataset = new UserDataset($db);
 
 // Handle actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (isset($_POST['update_status'])) {
-            $userModel->updateUserStatus($_POST['user_id'], $_POST['new_status']);
+            $userDataset->updateUserStatus($_POST['user_id'], $_POST['new_status']);
             $_SESSION['success'] = "User status updated successfully";
         }
         elseif (isset($_POST['update_role'])) {
-            $userModel->updateUserRole($_POST['user_id'], $_POST['new_role']);
+            $userDataset->updateUserRole($_POST['user_id'], $_POST['new_role']);
             $_SESSION['success'] = "User role updated successfully";
         }
         elseif (isset($_POST['delete_user'])) {
             // Prevent admin from deleting themselves
             if ($_POST['user_id'] != $_SESSION['user_id']) {
-                $userModel->deleteUser($_POST['user_id']);
+                $userDataset->deleteUser($_POST['user_id']);
                 $_SESSION['success'] = "User deleted successfully";
             } else {
                 $_SESSION['error'] = "You cannot delete your own account";
@@ -41,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get search query if exists
 $searchQuery = $_GET['search'] ?? '';
 $users = $searchQuery 
-    ? $userModel->searchUsers($searchQuery)
-    : $userModel->getAllUsers();
+    ? $userDataset->searchUsers($searchQuery)
+    : $userDataset->getAllUsers();
 
 require 'Views/admin/users.phtml';

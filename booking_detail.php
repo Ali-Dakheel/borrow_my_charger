@@ -6,7 +6,8 @@ require_once 'Models/ChargePointData.php';
 require_once 'Models/ChargePointDataset.php';
 require_once 'Models/ReviewData.php';
 require_once 'Models/ReviewDataset.php';
-require_once 'Models/ContactMessages.php';
+require_once 'Models/ContactMessageData.php';
+require_once 'Models/ContactMessageDataset.php';
 
 // Handle POST requests for submitting reviews or sending messages
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -48,14 +49,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'send_message':
-                $messageModel = new ContactMessage($db);
+                $messageDataset = new ContactMessageDataset($db);
                 $messageData = [
                     'booking_id'   => $_POST['booking_id'],
                     'sender_id'    => $_SESSION['user_id'],
                     'recipient_id' => $_POST['recipient_id'],
                     'message'      => $_POST['message']
                 ];
-                $messageModel->create($messageData);
+                $messageDataset->create($messageData);
                 
                 // Create a notification for the homeowner
                 $bookingNumber = $_POST['booking_id'];
@@ -117,8 +118,8 @@ $reviewsDataset = new ReviewsDataset($db);
 $review = $reviewsDataset->getByBookingId($bookingId);
 
 // Get messages for this booking
-$messageModel = new ContactMessage($db);
-$messages = $messageModel->getMessagesByBookingId($bookingId);
+$messageDataset = new ContactMessageDataset($db);
+$messages = $messageDataset->getMessagesByBookingId($bookingId);
 
 // Check if booking is eligible for review:
 // 1. Status is not 'pending'

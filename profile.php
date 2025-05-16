@@ -1,8 +1,14 @@
 <?php
+
 require_once __DIR__ . '/Core/bootstrap.php';
-require_once __DIR__ . '/Models/User.php';
-$users = new User($db);
-$user = $users->getUserById($_SESSION['user_id']);
+require_once __DIR__ . '/Models/UserData.php';
+require_once __DIR__ . '/Models/UserDataset.php';
+
+$userDataset = new UserDataset($db);
+$userData = $userDataset->getUserById($_SESSION['user_id']);
+
+// Convert UserData object to array for the view
+$user = $userData->toArray();
 $message = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -30,11 +36,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (!empty($data) && $message === null) {
-        $result = $users->update($_SESSION['user_id'], $data);
+        $result = $userDataset->update($_SESSION['user_id'], $data);
         
         if ($result) {
             $message = "Profile updated successfully!";
-            $user = $users->getUserById($_SESSION['user_id']); 
+            $userData = $userDataset->getUserById($_SESSION['user_id']);
+            $user = $userData->toArray();
         } else {
             $message = "Failed to update profile. Please try again.";
         }

@@ -1,14 +1,18 @@
 <?php
+// ContactMessageDataset.php
+require_once(__DIR__ . '/ContactMessageData.php');
 
 use Core\Database;
 
-class ContactMessage
+class ContactMessageDataset
 {
     protected $db;
+    
     public function __construct(Database $db)
     {
         $this->db = $db;
     }
+
     public function create($data)
     {
         try {
@@ -30,7 +34,7 @@ class ContactMessage
     public function getMessagesByBookingId($bookingId)
     {
         try {
-            return $this->db->query(
+            $rows = $this->db->query(
                 'SELECT cm.*, 
                         u_sender.name as sender_name, 
                         u_recipient.name as recipient_name,
@@ -42,6 +46,19 @@ class ContactMessage
                  ORDER BY cm.sent_at ASC',
                 [$bookingId]
             )->findAll();
+            
+            // For compatibility with the existing view, return the array directly
+            // In a more complete refactoring, we would return ContactMessageData objects
+            return $rows;
+            
+            // Alternative implementation that returns objects but might require view changes:
+            /*
+            $messages = [];
+            foreach ($rows as $row) {
+                $messages[] = new ContactMessageData($row);
+            }
+            return $messages;
+            */
         } catch (PDOException $e) {
             throw new Exception("Failed to fetch messages: " . $e->getMessage());
         }
@@ -49,7 +66,17 @@ class ContactMessage
 
     public function deleteMessage($messageId)
     {
-        $sql = "DELETE FROM contact_messages WHERE id = :id";
-        $this->db->query($sql, ['id' => $messageId]);
+        return $this->db->query("DELETE FROM contact_messages WHERE id = ?", [$messageId]);
+    }
+    
+    public function getById($id)
+    {
+        $row = $this->db->query('SELECT * FROM contact_messages WHERE id = ?', [$id])->find();
+        
+        if (!$row) {
+            return null;
+        }
+        
+        return new ContactMessageData($row);
     }
 }
