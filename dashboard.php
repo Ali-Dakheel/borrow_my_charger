@@ -20,8 +20,8 @@ $userDataset = new UserDataset($db);
 $userRole = $_SESSION['role'] ?? 'user';
 $userId = $_SESSION['user_id'];
 
-// Set fixed date/time and username for consistency
-$currentDateTime = '2025-05-15 08:53:29';
+// Set current date/time and username
+$currentDateTime = date('Y-m-d H:i:s');
 $currentUser = $_SESSION['username'];
 
 switch ($userRole) {
