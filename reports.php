@@ -1,6 +1,14 @@
 <?php
 require_once __DIR__ . '/Core/bootstrap.php';
 require_once 'Models/Report.php';
+
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    $errorMessage = "Access Denied";
+    $errorDetails = "You don't have permission to access this page. This area is restricted to administrators only.";
+    $backLink = "dashboard.php"; 
+    require_once 'Views/error.phtml';
+    exit();
+}
 $reportModel = new Report($db);
 
 $error = '';

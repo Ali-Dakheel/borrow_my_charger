@@ -5,8 +5,16 @@ require_once 'Models/UserDataset.php';
 
 
 // Check if admin
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
+    exit();
+}
+
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    $errorMessage = "Access Denied";
+    $errorDetails = "You don't have permission to access this page. This area is restricted to administrators only.";
+    $backLink = "dashboard.php"; 
+    require_once 'Views/error.phtml';
     exit();
 }
 

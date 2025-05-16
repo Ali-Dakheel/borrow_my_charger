@@ -6,12 +6,32 @@ use Core\Database;
 class BookingDataset
 {
     protected $db;
-    
+
     public function __construct(Database $db)
     {
         $this->db = $db;
     }
-    
+    /**
+     * Gets all bookings for a specific charge point
+     * 
+     * @param int $chargePointId The ID of the charge point
+     * @return array Array of booking data
+     */
+    public function getBookingsByChargePointId($chargePointId)
+    {
+        try {
+            return $this->db->query(
+                'SELECT b.*, u.name as user_name 
+             FROM bookings b
+             JOIN users u ON b.user_id = u.id
+             WHERE b.charge_point_id = ?
+             ORDER BY b.created_at DESC',
+                [$chargePointId]
+            )->findAll();
+        } catch (PDOException $e) {
+            throw new Exception("Failed to fetch bookings: " . $e->getMessage());
+        }
+    }
     public function getByHomeownerIdWithDetails($homeownerId)
     {
         return $this->db->query(
@@ -29,7 +49,7 @@ class BookingDataset
             [$homeownerId]
         )->findAll();
     }
-    
+
     public function getByRentalUserIdWithDetails($userId)
     {
         return $this->db->query(
@@ -46,29 +66,29 @@ class BookingDataset
             [$userId]
         )->findAll();
     }
-    
+
     public function updateBookingStatus($id, $status)
     {
         $validStatuses = ['pending', 'approved', 'cancelled', 'declined'];
-        
+
         if (!in_array($status, $validStatuses)) {
             throw new InvalidArgumentException("Invalid booking status");
         }
-    
+
         return $this->db->query(
             "UPDATE bookings SET status = ? WHERE id = ?",
             [$status, $id]
         );
     }
-    
+
     public function cancelBooking($id)
     {
         return $this->db->query(
-            "UPDATE bookings SET status = 'cancelled' WHERE id = ?", 
+            "UPDATE bookings SET status = 'cancelled' WHERE id = ?",
             [$id]
         );
     }
-    
+
     public function create($data)
     {
         return $this->db->query(
@@ -84,7 +104,7 @@ class BookingDataset
             ]
         );
     }
-    
+
     public function getBookingWithDetailsByIdForUser($bookingId, $userId)
     {
         $data = $this->db->query(
@@ -101,21 +121,21 @@ class BookingDataset
              WHERE b.id = ? AND b.user_id = ?',
             [$bookingId, $userId]
         )->find();
-        
+
         if (!$data) {
             return null;
         }
-        
+
         // Create a BookingData object with the core booking data
         $booking = new BookingData($data);
-        
+
         // Return both the booking data and the full row for template use
         return [
             'booking' => $booking,
             'details' => $data
         ];
     }
-    
+
     public function getBookingWithDetailsByIdForHomeowner($bookingId, $homeownerId)
     {
         $data = $this->db->query(
@@ -131,14 +151,14 @@ class BookingDataset
              WHERE b.id = ? AND cp.homeowner_id = ?',
             [$bookingId, $homeownerId]
         )->find();
-        
+
         if (!$data) {
             return null;
         }
-        
+
         // Create a BookingData object with the core booking data
         $booking = new BookingData($data);
-        
+
         // Return both the booking data and the full row for template use
         return [
             'booking' => $booking,
@@ -149,11 +169,11 @@ class BookingDataset
     public function getById($id)
     {
         $row = $this->db->query('SELECT * FROM bookings WHERE id = ?', [$id])->find();
-        
+
         if (!$row) {
             return null;
         }
-        
+
         return new BookingData($row);
     }
 }

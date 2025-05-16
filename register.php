@@ -12,7 +12,6 @@ $username = null;
 $name = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Check if this is a charge point creation submission from a recently registered homeowner
     if (isset($_POST['action']) && $_POST['action'] === 'create_charge_point') {
         try {
             // Create a new charge point using the dataset class
@@ -42,19 +41,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'latitude' => $latitude,
                 'longitude' => $longitude,
                 'price_per_kwh' => $price,
-                'is_available' => 0, // Always set to unavailable for new registrations
-                'image_path' => null // You can add image upload functionality later
+                'is_available' => 0, 
+                'image_path' => null 
             ];
             
             $chargePointDataset->create($chargePointData);
             
-            // Start session and log in the user
             session_start();
             $_SESSION['user_id'] = $homeownerId;
             $_SESSION['username'] = $_POST['username'];
             $_SESSION['role'] = 'homeowner';
             
-            // Redirect to dashboard with a message about approval
             $_SESSION['approval_message'] = "Your account has been registered successfully. Your charge point will be unavailable until an admin approves your account.";
             header('Location: dashboard.php');
             exit();
@@ -84,40 +81,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($password !== $confirmPassword) {
                 throw new Exception('Passwords do not match!');
             }
-            
-            // Validate username (prevent duplicates)
-            $existingUser = $db->query("SELECT id FROM users WHERE username = ?", [$username])->find();
+            $existingUser = $userDataset->checkExistingUser($username);
+
             if ($existingUser) {
                 throw new Exception('Username already exists. Please choose another one.');
             }
 
-            // Prepare user data (note: the create method in UserDataset will hash the password)
             $userData = [
                 'username' => $username,
                 'name' => $name,
-                'password' => $password, // Will be hashed in UserDataset::create
+                'password' => $password, 
                 'role' => $role,
                 'status' => 'active',
-                'is_approved' => ($role === 'homeowner') ? 0 : 1 // Homeowners need approval
+                'is_approved' => ($role === 'homeowner') ? 0 : 1
             ];
             
-            // Use direct SQL query to avoid required email field
-            // Note: UserDataset::create() requires email which isn't used in the form
             $sql = "INSERT INTO users (username, name, password, role, status) VALUES (?, ?, ?, ?, 'active')";
             $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
             $result = $db->query($sql, [$username, $name, $hashedPassword, $role]);
 
-            // Check if a row was inserted
             if ($result->statement->rowCount() > 0) {
-                // Get the inserted user's ID using connection directly
                 $userId = $db->connection->lastInsertId();
                 $userRole = $role;
                 
-                // If user is a homeowner, prompt to create a charge point
                 if ($role === 'homeowner') {
                     $message = 'Registration successful! Please set up your charge point. Note that your charge point will be unavailable until an admin approves your account.';
                 } else {
-                    // Otherwise, log them in and redirect
                     session_start();
                     $_SESSION['user_id'] = $userId;
                     $_SESSION['username'] = $username;

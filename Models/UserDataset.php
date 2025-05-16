@@ -12,6 +12,10 @@ class UserDataset
     {
         $this->db = $db;
     }
+    public function checkExistingUser($username){
+        $row = $this->db->query("SELECT id FROM users WHERE username = ?", [$username])->find();
+        return $row;
+    }
 
     public function getAllUsers()
     {
